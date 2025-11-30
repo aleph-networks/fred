@@ -3351,12 +3351,7 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 
 		@Override
 		public int compareTo(TimedStats o) {
-			if(totalTime < o.totalTime)
-				return 1;
-			else if(totalTime == o.totalTime)
-				return 0;
-			else
-				return -1;
+            return Long.compare(o.totalTime, totalTime);
 		}
 	}
 

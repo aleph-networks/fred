@@ -161,10 +161,8 @@ public class UserAlertManager implements Comparator<UserAlert> {
 			// And finally by object hashCode
 			int hash0 = a0.hashCode();
 			int hash1 = a1.hashCode();
-			if(hash0 > hash1) return 1;
-			if(hash1 > hash0) return -1;
-			return 0;
-		} else {
+            return Integer.compare(hash0, hash1);
+        } else {
 			if(prio0 > prio1) return 1;
 			else return -1;
 		}

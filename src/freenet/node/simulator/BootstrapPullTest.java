@@ -162,23 +162,22 @@ public class BootstrapPullTest {
            	fs = new SimpleFieldSet(lis, 65536, 128, true, false, true);
        		System.out.println("Got FCP message: \n"+name);
        		System.out.print(fs.toOrderedString());
-       		if(name.equals("ProtocolError")) {
-       			System.err.println("Protocol error when inserting data.");
-       			System.exit(EXIT_INSERTER_PROBLEM);
-       		}
-       		if(name.equals("PutFailed")) {
-       			System.err.println("Insert failed");
-       			System.exit(EXIT_INSERT_FAILED);
-       		}
-       		if(name.equals("PutSuccessful")) {
-       	        long endInsertTime = System.currentTimeMillis();
-       			FreenetURI uri = new FreenetURI(fs.get("URI"));
-       	        System.out.println("RESULT: Insert took "+(endInsertTime-startInsertTime)+"ms ("+TimeUtil.formatTime(endInsertTime-startInsertTime)+") to "+uri+" .");
-       			sockOS.close();
-       			sockIS.close();
-       			sock.close();
-       			return uri;
-       		}
-       	}
+            switch (name) {
+                case "ProtocolError":
+                    System.err.println("Protocol error when inserting data.");
+                    System.exit(EXIT_INSERTER_PROBLEM);
+                case "PutFailed":
+                    System.err.println("Insert failed");
+                    System.exit(EXIT_INSERT_FAILED);
+                case "PutSuccessful":
+                    long endInsertTime = System.currentTimeMillis();
+                    FreenetURI uri = new FreenetURI(fs.get("URI"));
+                    System.out.println("RESULT: Insert took " + (endInsertTime - startInsertTime) + "ms (" + TimeUtil.formatTime(endInsertTime - startInsertTime) + ") to " + uri + " .");
+                    sockOS.close();
+                    sockIS.close();
+                    sock.close();
+                    return uri;
+            }
+        }
 	}
 }
