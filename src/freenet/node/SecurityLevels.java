@@ -177,7 +177,7 @@ public class SecurityLevels {
 		private final ArrayList<SecurityLevelListener<T>> listeners;
 		
 		MyCallback() {
-			listeners = new ArrayList<SecurityLevelListener<T>>();
+			listeners = new ArrayList<>();
 		}
 		
 		public void addListener(SecurityLevelListener<T> listener) {

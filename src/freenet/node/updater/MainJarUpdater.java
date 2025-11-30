@@ -90,8 +90,8 @@ public class MainJarUpdater extends NodeUpdater implements Deployer {
 	
 	// Dependency handling.
 	
-	private HashSet<DependencyJarFetcher> fetchers = new HashSet<DependencyJarFetcher>();
-	private HashSet<DependencyJarFetcher> essentialFetchers = new HashSet<DependencyJarFetcher>();
+	private HashSet<DependencyJarFetcher> fetchers = new HashSet<>();
+	private HashSet<DependencyJarFetcher> essentialFetchers = new HashSet<>();
 
 	protected void parseDependencies(Properties props, int build) {
 		synchronized(fetchers) {

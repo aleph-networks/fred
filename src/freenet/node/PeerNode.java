@@ -313,9 +313,9 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	static final byte[] TEST_AS_BYTES = "test".getBytes(StandardCharsets.UTF_8);
 
 	/** Holds a String-Long pair that shows which message types (as name) have been send to this peer. */
-	private final Hashtable<String, Long> localNodeSentMessageTypes = new Hashtable<String, Long>();
+	private final Hashtable<String, Long> localNodeSentMessageTypes = new Hashtable<>();
 	/** Holds a String-Long pair that shows which message types (as name) have been received by this peer. */
-	private final Hashtable<String, Long> localNodeReceivedMessageTypes = new Hashtable<String, Long>();
+	private final Hashtable<String, Long> localNodeReceivedMessageTypes = new Hashtable<>();
 
 	/** Hold collected IP addresses for handshake attempts, populated by DNSRequestor */
 	private Peer[] handshakeIPs;
@@ -371,7 +371,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	private int listeningHandshakeBurstSize;
 
 	/** The set of the listeners that needs to be notified when status changes. It uses WeakReference, so there is no need to deregister*/
-	private Set<PeerManager.PeerStatusChangeListener> listeners=Collections.synchronizedSet(new WeakHashSet<PeerStatusChangeListener>());
+	private Set<PeerManager.PeerStatusChangeListener> listeners=Collections.synchronizedSet(new WeakHashSet<>());
 
 	// NodeCrypto for the relevant node reference for this peer's type (Darknet or Opennet at this time))
 	protected final NodeCrypto crypto;
@@ -387,7 +387,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	 *  The initiator has to ensure that nonces send back by the
 	 *  responder in message2 match what was chosen in message 1
 	 */
-	protected final LinkedList<byte[]> jfkNoncesSent = new LinkedList<byte[]>();
+	protected final LinkedList<byte[]> jfkNoncesSent = new LinkedList<>();
 	private static volatile boolean logMINOR;
 	private static volatile boolean logDEBUG;
 
@@ -424,7 +424,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	                throws FSParseException, PeerParseException, ReferenceSignatureVerificationException, PeerTooOldException {
 		boolean noSig = false;
 		if(fromLocal || fromAnonymousInitiator()) noSig = true;
-		myRef = new WeakReference<PeerNode>(this);
+		myRef = new WeakReference<>(this);
 		this.checkStatusAfterBackoff = new PeerNodeBackoffStatusChecker(myRef);
 		this.outgoingMangler = crypto.getPacketMangler();
 		this.node = node2;
@@ -511,13 +511,11 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 					sfs = fs.subset("dsaPubKey");
 					identity = SHA256.digest(DSAPublicKey.create(sfs, Global.DSAgroupBigA).asBytes());
 				}
-			} catch(NumberFormatException e) {
-				throw new FSParseException(e);
-			} catch(IllegalBase64Exception e) {
+			} catch(NumberFormatException | IllegalBase64Exception e) {
 				throw new FSParseException(e);
 			}
 
-		if(identity == null)
+        if(identity == null)
 			throw new FSParseException("No identity");
 		identityAsBase64String = Base64.encode(identity);
 		identityHash = SHA256.digest(identity);
@@ -556,7 +554,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			throw new Error(e1);
 		}
 
-		nominalPeer = new ArrayList<Peer>();
+		nominalPeer = new ArrayList<>();
 		try {
 			String physical[] = fs.getAll("physical.udp");
 			if(physical == null) {
@@ -566,23 +564,13 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 					Peer p;
 					try {
 						p = new Peer(phys, true, true);
-					} catch(HostnameSyntaxException e) {
-						if(fromLocal)
-							Logger.error(this, "Invalid hostname or IP Address syntax error while parsing peer reference in local peers list: " + phys);
-						System.err.println("Invalid hostname or IP Address syntax error while parsing peer reference: " + phys);
-						continue;
-					} catch (PeerParseException e) {
-						if(fromLocal)
-							Logger.error(this, "Invalid hostname or IP Address syntax error while parsing peer reference in local peers list: " + phys);
-						System.err.println("Invalid hostname or IP Address syntax error while parsing peer reference: " + phys);
-						continue;
-					} catch (UnknownHostException e) {
+					} catch(HostnameSyntaxException | UnknownHostException | PeerParseException e) {
 						if(fromLocal)
 							Logger.error(this, "Invalid hostname or IP Address syntax error while parsing peer reference in local peers list: " + phys);
 						System.err.println("Invalid hostname or IP Address syntax error while parsing peer reference: " + phys);
 						continue;
 					}
-					if(!nominalPeer.contains(p))
+                    if(!nominalPeer.contains(p))
 						nominalPeer.add(p);
 				}
 			}
@@ -649,14 +637,11 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 					p = null;
 					if(detectedUDPString != null)
 						p = new Peer(detectedUDPString, false);
-				} catch(UnknownHostException e) {
-					p = null;
-					Logger.error(this, "detected.udp = " + metadata.get("detected.udp") + " - " + e, e);
-				} catch(PeerParseException e) {
+				} catch(UnknownHostException | PeerParseException e) {
 					p = null;
 					Logger.error(this, "detected.udp = " + metadata.get("detected.udp") + " - " + e, e);
 				}
-				if(p != null)
+                if(p != null)
 					detectedPeer = p;
 				updateShortToString();
 				timeLastReceivedPacket = metadata.getLong("timeLastReceivedPacket", -1);
@@ -753,13 +738,11 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 				Logger.error(this, "Got a differential node reference from " + this + " with an arkPubKey but no ARK edition");
 				return false;
 			} else return false;
-		} catch(MalformedURLException e) {
-			Logger.error(this, "Couldn't parse ARK info for " + this + ": " + e, e);
-		} catch(NumberFormatException e) {
+		} catch(MalformedURLException | NumberFormatException e) {
 			Logger.error(this, "Couldn't parse ARK info for " + this + ": " + e, e);
 		}
 
-		synchronized(this) {
+        synchronized(this) {
 			if(ark != null) {
 				if((myARK == null) || ((myARK != ark) && !myARK.equals(ark))) {
 					myARK = ark;
@@ -850,7 +833,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			}
 		}
 		// De-dupe
-		HashSet<Peer> ret = new HashSet<Peer>();
+		HashSet<Peer> ret = new HashSet<>();
 		Collections.addAll(ret, localHandshakeIPs);
 		return ret.toArray(new Peer[0]);
 	}
@@ -907,7 +890,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 
 		List<Peer> localPeers = null;
 		synchronized(this) {
-			localPeers = new ArrayList<Peer>(nominalPeer);
+			localPeers = new ArrayList<>(nominalPeer);
 		}
 
 		boolean addedLocalhost = false;
@@ -2473,12 +2456,10 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 					byte[] id = Base64.decode(identityString);
 					if (!Arrays.equals(id, identity))
 						throw new FSParseException("Changing the identity");
-				} catch (NumberFormatException e) {
-					throw new FSParseException(e);
-				} catch (IllegalBase64Exception e) {
+				} catch (NumberFormatException | IllegalBase64Exception e) {
 					throw new FSParseException(e);
 				}
-			}
+            }
 		
 		String newVersion = fs.get("version");
 		if(newVersion == null) {
@@ -2527,7 +2508,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			if(physical != null) {
 				List<Peer> oldNominalPeer = nominalPeer;
 
-				nominalPeer = new ArrayList<Peer>(physical.length);
+				nominalPeer = new ArrayList<>(physical.length);
 
 				Peer[] oldPeers = oldNominalPeer.toArray(new Peer[oldNominalPeer.size()]);
 
@@ -2535,10 +2516,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 					Peer p;
 					try {
 						p = new Peer(phys, true, true);
-					} catch(HostnameSyntaxException e) {
-						Logger.error(this, "Invalid hostname or IP Address syntax error while parsing new peer reference: " + phys);
-						continue;
-					} catch (PeerParseException e) {
+					} catch(HostnameSyntaxException | PeerParseException e) {
 						Logger.error(this, "Invalid hostname or IP Address syntax error while parsing new peer reference: " + phys);
 						continue;
 					} catch (UnknownHostException e) {
@@ -3283,14 +3261,14 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	public Hashtable<String,Long> getLocalNodeSentMessagesToStatistic() {
 		// Must be synchronized *during the copy*
 		synchronized (localNodeSentMessageTypes) {
-			return new Hashtable<String,Long>(localNodeSentMessageTypes);
+			return new Hashtable<>(localNodeSentMessageTypes);
 		}
 	}
 
 	public Hashtable<String,Long> getLocalNodeReceivedMessagesFromStatistic() {
 		// Must be synchronized *during the copy*
 		synchronized (localNodeReceivedMessageTypes) {
-			return new Hashtable<String,Long>(localNodeReceivedMessageTypes);
+			return new Hashtable<>(localNodeReceivedMessageTypes);
 		}
 	}
 
@@ -3972,7 +3950,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			return null;
 		}
 		long loopTime1 = System.currentTimeMillis();
-		List<Peer> validIPs = new ArrayList<Peer>(localHandshakeIPs.length);
+		List<Peer> validIPs = new ArrayList<>(localHandshakeIPs.length);
 		boolean allowLocalAddresses = allowLocalAddresses();
 		for(Peer peer: localHandshakeIPs) {
 			FreenetInetAddress addr = peer.getFreenetAddress();
@@ -4419,7 +4397,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			this.tag = tag;
 			this.requestType = type;
 			this.offeredKey = offeredKey;
-			this.waitingFor = new HashSet<PeerNode>();
+			this.waitingFor = new HashSet<>();
 			this.realTime = realTime;
 			this.source = source;
 			synchronized(SlotWaiter.class) {
@@ -4537,7 +4515,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		
 		public HashSet<PeerNode> waitingForList() {
 			synchronized(this) {
-				return new HashSet<PeerNode>(waitingFor);
+				return new HashSet<>(waitingFor);
 			}
 		}
 		
@@ -4754,13 +4732,13 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	static class SlotWaiterList {
 		
 		private final LinkedHashMap<PeerNode, TreeMap<Long, SlotWaiter>> lru =
-			new LinkedHashMap<PeerNode, TreeMap<Long, SlotWaiter>>();
+                new LinkedHashMap<>();
 
 		public synchronized void put(SlotWaiter waiter) {
 			PeerNode source = waiter.source;
 			TreeMap<Long, SlotWaiter> map = lru.get(source);
 			if(map == null) {
-				lru.put(source, map = new TreeMap<Long, SlotWaiter>());
+				lru.put(source, map = new TreeMap<>());
 			}
 			map.put(waiter.counter, waiter);
 		}
@@ -4797,7 +4775,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		}
 
 		public synchronized ArrayList<SlotWaiter> values() {
-			ArrayList<SlotWaiter> list = new ArrayList<SlotWaiter>();
+			ArrayList<SlotWaiter> list = new ArrayList<>();
 			for(TreeMap<Long, SlotWaiter> map : lru.values()) {
 				list.addAll(map.values());
 			}
@@ -4928,7 +4906,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		// FIXME on capacity changing so that we should add another node???
 		// FIXME on backoff so that we should add another node???
 		
-		private final EnumMap<RequestType,SlotWaiterList> slotWaiters = new EnumMap<RequestType,SlotWaiterList>(RequestType.class);
+		private final EnumMap<RequestType,SlotWaiterList> slotWaiters = new EnumMap<>(RequestType.class);
 		
 		boolean queueSlotWaiter(SlotWaiter waiter) {
 			if(!isRoutable()) {
@@ -5351,8 +5329,8 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		private final ArrayList<Message> messagesWantSomething;
 		
 		public MyDecodingMessageGroup(int size) {
-			messages = new ArrayList<Message>(size);
-			messagesWantSomething = new ArrayList<Message>(size);
+			messages = new ArrayList<>(size);
+			messagesWantSomething = new ArrayList<>(size);
 		}
 
 		@Override
@@ -5406,7 +5384,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		else
 			prevLoc = -1.0;
 
-		Set<Double> excludeLocations = new HashSet<Double>();
+		Set<Double> excludeLocations = new HashSet<>();
 		excludeLocations.add(myLoc);
 		excludeLocations.add(prevLoc);
 		for (PeerNode routedToNode : routedTo) {

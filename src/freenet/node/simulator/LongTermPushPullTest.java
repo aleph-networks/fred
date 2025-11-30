@@ -93,7 +93,7 @@ public class LongTermPushPullTest extends LongTermTest {
 			System.exit(0);
 		}
 
-		List<String> csvLine = new ArrayList<String>(3 + 2 * MAX_N);
+		List<String> csvLine = new ArrayList<>(3 + 2 * MAX_N);
 		System.out.println("DATE:" + dateFormat.format(today.getTime()));
 		csvLine.add(dateFormat.format(today.getTime()));
 
@@ -240,7 +240,7 @@ public class LongTermPushPullTest extends LongTermTest {
 		BufferedReader br = new BufferedReader(new InputStreamReader(fis, ENCODING));
 		String line = null;
 		Calendar prevDate = null;
-		TreeMap<GregorianCalendar,DumpElement> map = new TreeMap<GregorianCalendar,DumpElement>();
+		TreeMap<GregorianCalendar,DumpElement> map = new TreeMap<>();
 		while((line = br.readLine()) != null) {
 			DumpElement element;
 			//System.out.println("LINE: "+line);
@@ -301,7 +301,7 @@ public class LongTermPushPullTest extends LongTermTest {
 			long successTime = 0;
 			int noMatch = 0;
 			int insertFailure = 0;
-			Map<String,Integer> failureModes = new HashMap<String,Integer>();
+			Map<String,Integer> failureModes = new HashMap<>();
 			for(Entry<GregorianCalendar,DumpElement> entry : map.entrySet()) {
 				GregorianCalendar date = entry.getKey();
 				DumpElement element = entry.getValue();
@@ -393,18 +393,15 @@ public class LongTermPushPullTest extends LongTermTest {
 
 	private static RandomAccessBucket randomData(Node node) throws IOException {
 	    RandomAccessBucket data = node.getClientCore().getTempBucketFactory().makeBucket(TEST_SIZE);
-		OutputStream os = data.getOutputStream();
-		try {
-		byte[] buf = new byte[4096];
-		for (long written = 0; written < TEST_SIZE;) {
-			node.getFastWeakRandom().nextBytes(buf);
-			int toWrite = (int) Math.min(TEST_SIZE - written, buf.length);
-			os.write(buf, 0, toWrite);
-			written += toWrite;
-		}
-		} finally {
-		os.close();
-		}
+        try (OutputStream os = data.getOutputStream()) {
+            byte[] buf = new byte[4096];
+            for (long written = 0; written < TEST_SIZE; ) {
+                node.getFastWeakRandom().nextBytes(buf);
+                int toWrite = (int) Math.min(TEST_SIZE - written, buf.length);
+                os.write(buf, 0, toWrite);
+                written += toWrite;
+            }
+        }
 		return data;
 	}
 }

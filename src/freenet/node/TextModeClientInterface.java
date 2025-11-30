@@ -1040,7 +1040,7 @@ public class TextModeClientInterface implements Runnable {
 
     	System.out.println("Listing dir: "+thisdir);
 
-    	HashMap<String, Object> ret = new HashMap<String, Object>();
+    	HashMap<String, Object> ret = new HashMap<>();
 
     	File filelist[] = thisdir.listFiles();
     	if(filelist == null)
@@ -1150,22 +1150,11 @@ public class TextModeClientInterface implements Runnable {
         PeerNode pn;
         try {
             pn = n.createNewDarknetNode(fs, FRIEND_TRUST.NORMAL, FRIEND_VISIBILITY.NO);
-        } catch (FSParseException e1) {
+        } catch (FSParseException | PeerTooOldException | ReferenceSignatureVerificationException |
+                 PeerParseException e1) {
             System.err.println("Did not parse: "+e1);
             Logger.error(this, "Did not parse: "+e1, e1);
             return;
-        } catch (PeerParseException e1) {
-            System.err.println("Did not parse: "+e1);
-            Logger.error(this, "Did not parse: "+e1, e1);
-            return;
-        } catch (ReferenceSignatureVerificationException e1) {
-        	System.err.println("Did not parse: "+e1);
-            Logger.error(this, "Did not parse: "+e1, e1);
-            return;
-		} catch (PeerTooOldException e1) {
-		    System.err.println("Did not parse: "+e1);
-		    Logger.error(this, "Did not parse: "+e1, e1);
-		    return;
         }
         if(n.getPeers().addPeer(pn))
             System.out.println("Added peer: "+pn);

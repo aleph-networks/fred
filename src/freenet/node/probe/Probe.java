@@ -170,7 +170,7 @@ public class Probe implements ByteCounter {
 
 	public Probe(final Node node) {
 		this.node = node;
-		this.accepted = Collections.synchronizedMap(new HashMap<PeerNode, Counter>());
+		this.accepted = Collections.synchronizedMap(new HashMap<>());
 		this.timer = new Timer(true);
 
 		int sortOrder = 0;
@@ -325,12 +325,10 @@ public class Probe implements ByteCounter {
 				//TODO: Store config here as it has changed?
 				node.getConfig().store();
 			}
-		} catch (InvalidConfigValueException e) {
-			Logger.error(Probe.class, "node.identifier set() unexpectedly threw.", e);
-		} catch (NodeNeedRestartException e) {
+		} catch (InvalidConfigValueException | NodeNeedRestartException e) {
 			Logger.error(Probe.class, "node.identifier set() unexpectedly threw.", e);
 		}
-	}
+    }
 
 	/**
 	 * Sends an outgoing probe request.

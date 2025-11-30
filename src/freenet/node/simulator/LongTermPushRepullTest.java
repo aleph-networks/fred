@@ -48,7 +48,7 @@ public class LongTermPushRepullTest extends LongTermTest {
 		}
 		String uid = args[0];
 
-		List<String> csvLine = new ArrayList<String>(3 + 2 * MAX_N);
+		List<String> csvLine = new ArrayList<>(3 + 2 * MAX_N);
 		System.out.println("DATE:" + dateFormat.format(today.getTime()));
 		csvLine.add(dateFormat.format(today.getTime()));
 
@@ -183,18 +183,15 @@ public class LongTermPushRepullTest extends LongTermTest {
 
 	private static RandomAccessBucket randomData(Node node) throws IOException {
 	    RandomAccessBucket data = node.getClientCore().getTempBucketFactory().makeBucket(TEST_SIZE);
-		OutputStream os = data.getOutputStream();
-		try {
-		byte[] buf = new byte[4096];
-		for (long written = 0; written < TEST_SIZE;) {
-			node.getFastWeakRandom().nextBytes(buf);
-			int toWrite = (int) Math.min(TEST_SIZE - written, buf.length);
-			os.write(buf, 0, toWrite);
-			written += toWrite;
-		}
-		} finally {
-		os.close();
-		}
+        try (OutputStream os = data.getOutputStream()) {
+            byte[] buf = new byte[4096];
+            for (long written = 0; written < TEST_SIZE; ) {
+                node.getFastWeakRandom().nextBytes(buf);
+                int toWrite = (int) Math.min(TEST_SIZE - written, buf.length);
+                os.write(buf, 0, toWrite);
+                written += toWrite;
+            }
+        }
 		return data;
 	}
 }

@@ -239,7 +239,7 @@ public class MainJarDependenciesChecker {
 	private final Deployer deployer;
 	/** The final filenames we will use in the update, which we have 
 	 * already downloaded. */
-	private final TreeSet<Dependency> dependencies = new TreeSet<Dependency>();
+	private final TreeSet<Dependency> dependencies = new TreeSet<>();
 	/** Set if the update can't be deployed because the dependencies file is 
 	 * broken. We should wait for an update with a valid file. 
 	 */
@@ -312,7 +312,7 @@ public class MainJarDependenciesChecker {
 	
 	/** The dependency downloads currently running which are required for the next build. Hence 
 	 * non-essential (preload) dependencies are not added to this set. */
-	private final HashSet<Downloader> downloaders = new HashSet<Downloader>();
+	private final HashSet<Downloader> downloaders = new HashSet<>();
 	private final Executor executor;
 	
 	/** Parse the Properties file. Check whether we have the jars it refers to.
@@ -323,16 +323,12 @@ public class MainJarDependenciesChecker {
 	public synchronized MainJarDependencies handle(Properties props, int build) {
 		try {
 			return innerHandle(props, build);
-		} catch (RuntimeException e) {
-			broken = true;
-			Logger.error(this, "MainJarDependencies parsing update dependencies.properties file broke: "+e, e);
-			throw e;
-		} catch (Error e) {
+		} catch (RuntimeException | Error e) {
 			broken = true;
 			Logger.error(this, "MainJarDependencies parsing update dependencies.properties file broke: "+e, e);
 			throw e;
 		}
-	}
+    }
 	
 	enum DEPENDENCY_TYPE {
 	    
@@ -364,7 +360,7 @@ public class MainJarDependenciesChecker {
 		// I.e. when we remove a library we put a placeholder in to tell this code to delete it.
 		// It's not acceptable to just delete stuff we don't know about.
 		clear(build);
-		HashSet<String> processed = new HashSet<String>();
+		HashSet<String> processed = new HashSet<>();
 		File[] list = new File(".").listFiles(new FileFilter() {
 
 			@Override
@@ -597,7 +593,7 @@ outer:	for(String propName : props.stringPropertyNames()) {
 			}
 		}
 		if(ready())
-			return new MainJarDependencies(new TreeSet<Dependency>(dependencies), build);
+			return new MainJarDependencies(new TreeSet<>(dependencies), build);
 		else
 			return null;
 	}
@@ -646,8 +642,8 @@ outer:	for(String propName : props.stringPropertyNames()) {
 	 */
 	public boolean cleanup(Properties props, final Deployer deployer, int build) {
 		// This method should not change anything, but can call the callbacks.
-		HashSet<String> processed = new HashSet<String>();
-		final ArrayList<File> toDelete = new ArrayList<File>();
+		HashSet<String> processed = new HashSet<>();
+		final ArrayList<File> toDelete = new ArrayList<>();
 		File[] listMain = new File(".").listFiles(new FileFilter() {
 
 			@Override
@@ -1280,8 +1276,8 @@ outer:	for(String propName : props.stringPropertyNames()) {
 	/** Deploys a multi-file replace without a restart */
 	class AtomicDeployer {
 	    
-	    private final Set<AtomicDependency> dependencies = new HashSet<AtomicDependency>();
-	    private final Set<AtomicDependency> dependenciesWaiting = new HashSet<AtomicDependency>();
+	    private final Set<AtomicDependency> dependencies = new HashSet<>();
+	    private final Set<AtomicDependency> dependenciesWaiting = new HashSet<>();
 	    private boolean failed;
 	    private boolean started;
 	    final String name;
@@ -1598,8 +1594,6 @@ outer:	for(String propName : props.stringPropertyNames()) {
         	}
         	Logger.error(MainJarDependenciesChecker.class, "Unable to get dependency version from "+currentFile);
         	return null;
-        } catch (FileNotFoundException e) {
-        	return null;
         } catch (IOException e) {
         	return null;
         } finally {
@@ -1642,14 +1636,11 @@ outer:	for(String propName : props.stringPropertyNames()) {
 		}
 		try {
 			return HexUtil.hexToBytes(sha256);
-		} catch (NumberFormatException e) {
-			Logger.error(MainJarDependencies.class, "Bogus expected hash: \""+sha256+"\" : "+e, e);
-			return null;
-		} catch (IndexOutOfBoundsException e) {
+		} catch (NumberFormatException | IndexOutOfBoundsException e) {
 			Logger.error(MainJarDependencies.class, "Bogus expected hash: \""+sha256+"\" : "+e, e);
 			return null;
 		}
-	}
+    }
 
 	public static boolean validFile(File filename, byte[] expectedHash, long size, boolean executable) {
 		if(filename == null) return false;
@@ -1706,7 +1697,7 @@ outer:	for(String propName : props.stringPropertyNames()) {
 	public void deploy() {
 		TreeSet<Dependency> f;
 		synchronized(this) {
-			f = new TreeSet<Dependency>(dependencies);
+			f = new TreeSet<>(dependencies);
 		}
 		if(logMINOR) Logger.minor(this, "Deploying build "+build+" with "+f.size()+" dependencies");
 		deployer.deploy(new MainJarDependencies(f, build));

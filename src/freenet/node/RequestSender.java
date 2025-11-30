@@ -87,7 +87,7 @@ public final class RequestSender extends BaseSender implements PrioRunnable {
     /** If true, only try to fetch the key from nodes which have offered it */
     private boolean tryOffersOnly;
     
-	private final ArrayList<RequestSenderListener> listeners=new ArrayList<RequestSenderListener>();
+	private final ArrayList<RequestSenderListener> listeners= new ArrayList<>();
 	
     // Terminal status
     // Always set finished AFTER setting the reason flag
@@ -1765,11 +1765,7 @@ public final class RequestSender extends BaseSender implements PrioRunnable {
     		om.sendOpennetRef(true, uid, next, om.getCrypto().myCompressedFullRef(), this);
 			origTag.finishedWaitingForOpennet(next);
 
-		} catch (FSParseException e) {
-			Logger.error(this, "Could not parse opennet noderef for "+this+" from "+next, e);
-    		ackOpennet(next);
-			return false;
-		} catch (PeerParseException e) {
+		} catch (FSParseException | PeerParseException e) {
 			Logger.error(this, "Could not parse opennet noderef for "+this+" from "+next, e);
     		ackOpennet(next);
 			return false;

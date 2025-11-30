@@ -137,12 +137,10 @@ public class SSKInsertHandler implements PrioRunnable, ByteCounter {
 				Message failed = DMT.createFNPDataInsertRejected(uid, DMT.DATA_INSERT_REJECTED_RECEIVE_FAILED);
 				try {
 					source.sendSync(failed, this, realTimeFlag);
-				} catch (NotConnectedException e) {
-					// Ignore
-				} catch (SyncSendWaitedTooLongException e) {
+				} catch (NotConnectedException | SyncSendWaitedTooLongException e) {
 					// Ignore
 				}
-				return;
+                return;
 			} else if(msg.getSpec() == DMT.FNPSSKInsertRequestHeaders) {
 				headers = ((ShortBuffer)msg.getObject(DMT.BLOCK_HEADERS)).getData();
 			} else if(msg.getSpec() == DMT.FNPSSKInsertRequestData) {
@@ -164,12 +162,10 @@ public class SSKInsertHandler implements PrioRunnable, ByteCounter {
 					msg = DMT.createFNPDataInsertRejected(uid, DMT.DATA_INSERT_REJECTED_SSK_ERROR);
 					try {
 						source.sendSync(msg, this, realTimeFlag);
-					} catch (NotConnectedException ee) {
-						// Ignore
-					} catch (SyncSendWaitedTooLongException ee) {
+					} catch (NotConnectedException | SyncSendWaitedTooLongException ee) {
 						// Ignore
 					}
-					return;
+                    return;
 				}
 			} else if(msg.getSpec() == DMT.FNPDataInsertRejected) {
 	        	try {
@@ -191,12 +187,10 @@ public class SSKInsertHandler implements PrioRunnable, ByteCounter {
 			Message msg = DMT.createFNPDataInsertRejected(uid, DMT.DATA_INSERT_REJECTED_SSK_ERROR);
 			try {
 				source.sendSync(msg, this, realTimeFlag);
-			} catch (NotConnectedException e) {
-				// Ignore
-			} catch (SyncSendWaitedTooLongException e) {
+			} catch (NotConnectedException | SyncSendWaitedTooLongException e) {
 				// Ignore
 			}
-			return;
+            return;
 		}
 		
 		SSKBlock storedBlock = node.fetch(key, false, false, false, canWriteDatastore, false, null);

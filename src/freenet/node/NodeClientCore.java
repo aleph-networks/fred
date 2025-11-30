@@ -908,15 +908,12 @@ public class NodeClientCore implements Persistable {
 			clientContext.setDownloadCache(fcpServer);
 			if (!killedDatabase())
 				fcpServer.load();
-		} catch (IOException e) {
-			throw new NodeInitException(NodeInitException.EXIT_COULD_NOT_START_FCP,
-						    "Could not start FCP: " + e);
-		} catch (InvalidConfigValueException e) {
+		} catch (IOException | InvalidConfigValueException e) {
 			throw new NodeInitException(NodeInitException.EXIT_COULD_NOT_START_FCP,
 						    "Could not start FCP: " + e);
 		}
 
-		// FProxy
+        // FProxy
 		// FIXME this is a hack, the real way to do this is plugins
 		this.alerts.register(
 				startingUpAlert =
@@ -1412,14 +1409,11 @@ public class NodeClientCore implements Persistable {
 			// Else it has started a request.
 			if(logMINOR)
 				Logger.minor(this, "Started " + o + " for " + uid + " for " + key);
-		} catch(RuntimeException e) {
-			Logger.error(this, "Caught error trying to start request: " + e, e);
-			listener.onNotStarted(true);
-		} catch(Error e) {
+		} catch(RuntimeException | Error e) {
 			Logger.error(this, "Caught error trying to start request: " + e, e);
 			listener.onNotStarted(true);
 		}
-	}
+    }
 
 	public ClientKeyBlock realGetKey(ClientKey key, boolean localOnly, boolean ignoreStore, boolean canWriteClientCache, boolean realTimeFlag) throws LowLevelGetException {
 		if(key instanceof ClientCHK)
@@ -2187,7 +2181,7 @@ public class NodeClientCore implements Persistable {
 		// slots and CPU. FIXME SECURITY/NETWORK: Reconsider if we ever decide
 		// not to decrement on the originator.
 		short origHTL = node.decrementHTL(null, node.maxHTL());
-		node.getPeers().closerPeer(null, new HashSet<PeerNode>(), key.toNormalizedDouble(), true, false, -1, null, 2.0, key, origHTL, 0, true, realTime, r, false, System.currentTimeMillis(), node.enableNewLoadManagement(realTime));
+		node.getPeers().closerPeer(null, new HashSet<>(), key.toNormalizedDouble(), true, false, -1, null, 2.0, key, origHTL, 0, true, realTime, r, false, System.currentTimeMillis(), node.enableNewLoadManagement(realTime));
 		return r.recentlyFailed();
 	}
 

@@ -114,7 +114,7 @@ public class AnnounceSender implements PrioRunnable, ByteCounter {
 
 		// Now route it.
 
-		HashSet<PeerNode> nodesRoutedTo = new HashSet<PeerNode>();
+		HashSet<PeerNode> nodesRoutedTo = new HashSet<>();
 		PeerNode next = null;
 		while(true) {
 			if(logMINOR) Logger.minor(this, "htl="+htl);
@@ -416,17 +416,11 @@ public class AnnounceSender implements PrioRunnable, ByteCounter {
 								else
 									cb.nodeNotAdded();
 							}
-						} catch (FSParseException e) {
-							Logger.normal(this, "Failed to parse reply: "+e, e);
-							if(cb != null) cb.bogusNoderef("parse failed: "+e);
-						} catch (PeerParseException e) {
-							Logger.normal(this, "Failed to parse reply: "+e, e);
-							if(cb != null) cb.bogusNoderef("parse failed: "+e);
-						} catch (ReferenceSignatureVerificationException e) {
+						} catch (FSParseException | ReferenceSignatureVerificationException | PeerParseException e) {
 							Logger.normal(this, "Failed to parse reply: "+e, e);
 							if(cb != null) cb.bogusNoderef("parse failed: "+e);
 						}
-					}
+                    }
 					return;
 				} finally {
 					synchronized(AnnounceSender.this) {
@@ -544,15 +538,7 @@ public class AnnounceSender implements PrioRunnable, ByteCounter {
 				sendNotWanted();
 				// Okay, just route it.
 			}
-		} catch (FSParseException e) {
-			Logger.warning(this, "Rejecting noderef: "+e, e);
-			OpennetManager.rejectRef(uid, source, DMT.NODEREF_REJECTED_INVALID, this);
-			return false;
-		} catch (PeerParseException e) {
-			Logger.warning(this, "Rejecting noderef: "+e, e);
-			OpennetManager.rejectRef(uid, source, DMT.NODEREF_REJECTED_INVALID, this);
-			return false;
-		} catch (ReferenceSignatureVerificationException e) {
+		} catch (FSParseException | ReferenceSignatureVerificationException | PeerParseException e) {
 			Logger.warning(this, "Rejecting noderef: "+e, e);
 			OpennetManager.rejectRef(uid, source, DMT.NODEREF_REJECTED_INVALID, this);
 			return false;

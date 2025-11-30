@@ -366,13 +366,10 @@ public class NodeDispatcher implements Dispatcher, Runnable {
 			return true;
 		}
 		
-		} catch (Error e) {
+		} catch (Error | RuntimeException e) {
 			tag.unlockHandler();
 			throw e;
-		} catch (RuntimeException e) {
-			tag.unlockHandler();
-			throw e;
-		} // Otherwise, sendOfferedKey is responsible for unlocking. 
+		} // Otherwise, sendOfferedKey is responsible for unlocking.
 		
 		// Accept it.
 		
@@ -455,7 +452,7 @@ public class NodeDispatcher implements Dispatcher, Runnable {
 		
 	};
 	
-	private final ArrayBlockingQueue<Message> requestQueue = new ArrayBlockingQueue<Message>(100);
+	private final ArrayBlockingQueue<Message> requestQueue = new ArrayBlockingQueue<>(100);
 	
 	private void handleDataRequest(Message m, PeerNode source, boolean isSSK) {
 		// FIXME check probablyInStore and if not, we can handle it inline.
@@ -794,7 +791,7 @@ public class NodeDispatcher implements Dispatcher, Runnable {
 		}
 	}
 
-	final Hashtable<Long, RoutedContext> routedContexts = new Hashtable<Long, RoutedContext>();
+	final Hashtable<Long, RoutedContext> routedContexts = new Hashtable<>();
 
 	static class RoutedContext {
 		long createdTime;
@@ -808,7 +805,7 @@ public class NodeDispatcher implements Dispatcher, Runnable {
 		RoutedContext(Message msg, PeerNode source, byte[] identity) {
 			createdTime = accessTime = System.currentTimeMillis();
 			this.source = source;
-			routedTo = new HashSet<PeerNode>();
+			routedTo = new HashSet<>();
 			this.msg = msg;
 			lastHtl = msg.getShort(DMT.HTL);
 			this.identity = identity;

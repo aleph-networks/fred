@@ -50,7 +50,7 @@ public class LongTermManySingleBlocksTest extends LongTermTest {
 
 		private final HighLevelSimpleClient client;
 		private int runningInserts;
-		private ArrayList<BatchInsert> inserts = new ArrayList<BatchInsert>();
+		private ArrayList<BatchInsert> inserts = new ArrayList<>();
 		
 		public InsertBatch(HighLevelSimpleClient client) {
 			this.client = client;
@@ -172,7 +172,7 @@ public class LongTermManySingleBlocksTest extends LongTermTest {
 		}
 		String uid = args[0];
 		
-		List<String> csvLine = new ArrayList<String>();
+		List<String> csvLine = new ArrayList<>();
 		System.out.println("DATE:" + dateFormat.format(today.getTime()));
 		csvLine.add(dateFormat.format(today.getTime()));
 
@@ -440,18 +440,15 @@ loopOverLines:
 	
 	private static RandomAccessBucket randomData(Node node) throws IOException {
 	    RandomAccessBucket data = node.getClientCore().getTempBucketFactory().makeBucket(TEST_SIZE);
-		OutputStream os = data.getOutputStream();
-		try {
-		byte[] buf = new byte[4096];
-		for (long written = 0; written < TEST_SIZE;) {
-			node.getFastWeakRandom().nextBytes(buf);
-			int toWrite = (int) Math.min(TEST_SIZE - written, buf.length);
-			os.write(buf, 0, toWrite);
-			written += toWrite;
-		}
-		} finally {
-		os.close();
-		}
+        try (OutputStream os = data.getOutputStream()) {
+            byte[] buf = new byte[4096];
+            for (long written = 0; written < TEST_SIZE; ) {
+                node.getFastWeakRandom().nextBytes(buf);
+                int toWrite = (int) Math.min(TEST_SIZE - written, buf.length);
+                os.write(buf, 0, toWrite);
+                written += toWrite;
+            }
+        }
 		return data;
 	}
 

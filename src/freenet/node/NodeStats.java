@@ -562,14 +562,14 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 		hourlyStatsRT = new HourlyStats(node);
 		hourlyStatsBulk = new HourlyStats(node);
 
-		avgMandatoryBackoffTimesRT = new Hashtable<String, TrivialRunningAverage>();
-		avgMandatoryBackoffTimesBulk = new Hashtable<String, TrivialRunningAverage>();
-		avgRoutingBackoffTimesRT = new Hashtable<String, TrivialRunningAverage>();
-		avgRoutingBackoffTimesBulk = new Hashtable<String, TrivialRunningAverage>();
-		avgTransferBackoffTimesRT = new Hashtable<String, TrivialRunningAverage>();
-		avgTransferBackoffTimesBulk = new Hashtable<String, TrivialRunningAverage>();
+		avgMandatoryBackoffTimesRT = new Hashtable<>();
+		avgMandatoryBackoffTimesBulk = new Hashtable<>();
+		avgRoutingBackoffTimesRT = new Hashtable<>();
+		avgRoutingBackoffTimesBulk = new Hashtable<>();
+		avgTransferBackoffTimesRT = new Hashtable<>();
+		avgTransferBackoffTimesBulk = new Hashtable<>();
 
-		avgDatabaseJobExecutionTimes = new Hashtable<String, TrivialRunningAverage>();
+		avgDatabaseJobExecutionTimes = new Hashtable<>();
 		
 		if(!NodeStarter.isTestingVM()) {
 			// Normal mode
@@ -3536,7 +3536,7 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 		return (int)Math.max(1, Math.ceil((totalAnnounceForwards*1.0)/totalAnnouncements));
 	}
 
-	private final HashSet<Long> runningAnnouncements = new HashSet<Long>();
+	private final HashSet<Long> runningAnnouncements = new HashSet<>();
 
 	// FIXME make configurable, more sophisticated.
 	

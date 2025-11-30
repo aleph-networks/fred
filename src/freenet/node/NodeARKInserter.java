@@ -183,12 +183,10 @@ public class NodeARKInserter implements ClientPutCallback, RequestClient {
 						for(int i=0;i<all.length;i++)
 							peers[i] = new Peer(all[i], false);
 						lastInsertedPeers = peers;
-					} catch (PeerParseException e1) {
-						Logger.error(this, "Error parsing own " + darknetOpennetString + " ref: "+e1+" : "+fs.get("physical.udp"), e1);
-					} catch (UnknownHostException e1) {
+					} catch (PeerParseException | UnknownHostException e1) {
 						Logger.error(this, "Error parsing own " + darknetOpennetString + " ref: "+e1+" : "+fs.get("physical.udp"), e1);
 					}
-				}
+                }
 			}
 		} catch (InsertException e) {
 			onFailure(e, inserter);	

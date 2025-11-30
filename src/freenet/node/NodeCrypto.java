@@ -218,13 +218,7 @@ public class NodeCrypto {
 
 		anonSetupCipher = new Rijndael(256,256);
 
-		} catch (NodeInitException e) {
-			config.stopping(this);
-			throw e;
-		} catch (RuntimeException e) {
-			config.stopping(this);
-			throw e;
-		} catch (Error e) {
+		} catch (NodeInitException | Error | RuntimeException e) {
 			config.stopping(this);
 			throw e;
 		} catch (UnsupportedCipherException e) {
@@ -593,7 +587,7 @@ public class NodeCrypto {
 	}
 
 	public PeerNode[] getAnonSetupPeerNodes() {
-		ArrayList<PeerNode> v = new ArrayList<PeerNode>();
+		ArrayList<PeerNode> v = new ArrayList<>();
 		for(PeerNode pn: node.getPeers().myPeers()) {
 			if(pn.handshakeUnknownInitiator() && pn.getOutgoingMangler() == packetMangler)
 				v.add(pn);

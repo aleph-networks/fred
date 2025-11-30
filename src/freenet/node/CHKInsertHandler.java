@@ -293,9 +293,7 @@ public class CHKInsertHandler implements PrioRunnable, ByteCounter {
             msg = DMT.createFNPRejectedOverload(uid, true, true, realTimeFlag);
             try {
 				source.sendSync(msg, this, realTimeFlag);
-			} catch (NotConnectedException e) {
-				// Ignore
-			} catch (SyncSendWaitedTooLongException e) {
+			} catch (NotConnectedException | SyncSendWaitedTooLongException e) {
 				// Ignore
 			}
             finish(CHKInsertSender.INTERNAL_ERROR);
@@ -368,14 +366,11 @@ public class CHKInsertHandler implements PrioRunnable, ByteCounter {
     			
     		}, this);
     		return;
-    	} catch (NotConnectedException e) {
+    	} catch (NotConnectedException | DisconnectedException e) {
     		if(logMINOR) Logger.minor(this, "Lost connection to source");
 			return;
-    	} catch (DisconnectedException e) {
-    		if(logMINOR) Logger.minor(this, "Lost connection to source");
-			return;
-		}
-	}
+    	}
+    }
 
 	private boolean canCommit = false;
     private boolean sentCompletion = false;

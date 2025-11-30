@@ -132,17 +132,17 @@ public class UpdateOverMandatoryManager implements RequestClient {
 
 	public UpdateOverMandatoryManager(NodeUpdateManager manager) {
 		this.updateManager = manager;
-		nodesSayKeyRevoked = new HashSet<PeerNode>();
-		nodesSayKeyRevokedFailedTransfer = new HashSet<PeerNode>();
-		nodesSayKeyRevokedTransferring = new HashSet<PeerNode>();
-		nodesOfferedMainJar = new HashSet<PeerNode>();
-		nodesSentMainJar = new HashSet<PeerNode>();
-		nodesAskedSendMainJar = new HashSet<PeerNode>();
-		nodesSendingMainJar = new HashSet<PeerNode>();
-		allNodesOfferedMainJar = new HashSet<PeerNode>();
-		dependencies = new HashMap<ShortBuffer, File>();
-		peersFetchingDependencies = new WeakHashMap<PeerNode, Integer>();
-		dependencyFetchers = new HashMap<ShortBuffer, UOMDependencyFetcher>();
+		nodesSayKeyRevoked = new HashSet<>();
+		nodesSayKeyRevokedFailedTransfer = new HashSet<>();
+		nodesSayKeyRevokedTransferring = new HashSet<>();
+		nodesOfferedMainJar = new HashSet<>();
+		nodesSentMainJar = new HashSet<>();
+		nodesAskedSendMainJar = new HashSet<>();
+		nodesSendingMainJar = new HashSet<>();
+		allNodesOfferedMainJar = new HashSet<>();
+		dependencies = new HashMap<>();
+		peersFetchingDependencies = new WeakHashMap<>();
+		dependencyFetchers = new HashMap<>();
 	}
 
 	/** 
@@ -252,7 +252,7 @@ public class UpdateOverMandatoryManager implements RequestClient {
 	private void tellFetchers(PeerNode source) {
 		HashSet<UOMDependencyFetcher> fetchList;
 		synchronized(dependencyFetchers) {
-			fetchList = new HashSet<UOMDependencyFetcher>(dependencyFetchers.values());
+			fetchList = new HashSet<>(dependencyFetchers.values());
 		}
 		for(UOMDependencyFetcher f : fetchList) {
 		    if(source.isDarknet()) f.peerMaybeFreeSlots(source);
@@ -657,9 +657,9 @@ public class UpdateOverMandatoryManager implements RequestClient {
 	}
 
 	public PeerNode[][] getNodesSayBlown() {
-		List<PeerNode> nodesConnectedSayRevoked = new ArrayList<PeerNode>();
-		List<PeerNode> nodesDisconnectedSayRevoked = new ArrayList<PeerNode>();
-		List<PeerNode> nodesFailedSayRevoked = new ArrayList<PeerNode>();
+		List<PeerNode> nodesConnectedSayRevoked = new ArrayList<>();
+		List<PeerNode> nodesDisconnectedSayRevoked = new ArrayList<>();
+		List<PeerNode> nodesFailedSayRevoked = new ArrayList<>();
 		synchronized(this) {
 			PeerNode[] nodesSayRevoked = nodesSayKeyRevoked.toArray(new PeerNode[nodesSayKeyRevoked.size()]);
 			for(PeerNode pn: nodesSayRevoked) {
@@ -1238,15 +1238,12 @@ public class UpdateOverMandatoryManager implements RequestClient {
 			msg =
 				DMT.createUOMSendingMainJar(uid, length, uri.toString(), version);
 			
-		} catch (RuntimeException e) {
-			source.finishedSendingUOMJar(false);
-			throw e;
-		} catch (Error e) {
+		} catch (RuntimeException | Error e) {
 			source.finishedSendingUOMJar(false);
 			throw e;
 		}
-		
-		final Runnable r = new Runnable() {
+
+        final Runnable r = new Runnable() {
 
 			@Override
 			public void run() {
@@ -1305,15 +1302,12 @@ public class UpdateOverMandatoryManager implements RequestClient {
 		} catch(NotConnectedException e) {
 			Logger.error(this, "Peer " + source + " asked us for the blob file for the "+name+" jar, then disconnected when we tried to send the UOMSendingMainJar: " + e, e);
 			return;
-		} catch (RuntimeException e) {
-			source.finishedSendingUOMJar(false);
-			throw e;
-		} catch (Error e) {
+		} catch (RuntimeException | Error e) {
 			source.finishedSendingUOMJar(false);
 			throw e;
 		}
 
-	}
+    }
 	
 	public boolean handleSendingMain(Message m, final PeerNode source) {
 		final long uid = m.getLong(DMT.UID);
@@ -1733,21 +1727,19 @@ public class UpdateOverMandatoryManager implements RequestClient {
 			cancelSend(source, uid);
 			decrementDependencies(source);
 		} else {
-			final FileRandomAccessBuffer r = raf;
-			updateManager.getNode().getExecutor().execute(new Runnable() {
+            updateManager.getNode().getExecutor().execute(new Runnable() {
 				
 				@Override
 				public void run() {
 					source.incrementUOMSends();
-					try {
-						bt.send();
-					} catch (DisconnectedException e) {
-						Logger.normal(this, "Disconnected while sending dependency with hash "+HexUtil.bytesToHex(buf.getData())+" to "+source);
-					} finally {
-						source.decrementUOMSends();
-						decrementDependencies(source);
-						r.close();
-					}
+                    try (FileRandomAccessBuffer r = raf) {
+                        bt.send();
+                    } catch (DisconnectedException e) {
+                        Logger.normal(this, "Disconnected while sending dependency with hash " + HexUtil.bytesToHex(buf.getData()) + " to " + source);
+                    } finally {
+                        source.decrementUOMSends();
+                        decrementDependencies(source);
+                    }
 				}
 				
 			});
@@ -1861,8 +1853,8 @@ public class UpdateOverMandatoryManager implements RequestClient {
 			this.executable = executable;
 			this.saveTo = saveTo;
 			cb = callback;
-			peersFailed = new WeakHashSet<PeerNode>();
-			peersFetching = new HashSet<PeerNode>();
+			peersFailed = new WeakHashSet<>();
+			peersFetching = new HashSet<>();
 		}
 		
 		/** If a transfer has failed from this peer, retry it. */
@@ -1887,17 +1879,17 @@ public class UpdateOverMandatoryManager implements RequestClient {
 				}
 				HashSet<PeerNode> uomPeers;
 				synchronized(UpdateOverMandatoryManager.this) {
-					uomPeers = new HashSet<PeerNode>(nodesSentMainJar);
+					uomPeers = new HashSet<>(nodesSentMainJar);
 				}
 				chosen = chooseRandomPeer(uomPeers);
 				if(chosen != null) break;
 				synchronized(UpdateOverMandatoryManager.this) {
-					uomPeers = new HashSet<PeerNode>(nodesSendingMainJar);
+					uomPeers = new HashSet<>(nodesSendingMainJar);
 				}
 				chosen = chooseRandomPeer(uomPeers);
 				if(chosen != null) break;
 				synchronized(UpdateOverMandatoryManager.this) {
-					uomPeers = new HashSet<PeerNode>(allNodesOfferedMainJar);
+					uomPeers = new HashSet<>(allNodesOfferedMainJar);
 				}
 				chosen = chooseRandomPeer(uomPeers);
 				if(chosen != null) break;
@@ -1980,11 +1972,7 @@ public class UpdateOverMandatoryManager implements RequestClient {
 						// User might be able to understand and fix this.
 						System.out.println("IOException while downloading "+saveTo+" from "+fetchFrom+" : "+e);
 						Logger.error(this, "IOException while downloading "+saveTo+" from "+fetchFrom+" : "+e, e);
-					} catch (RuntimeException e) {
-						Logger.error(this, "Caught fetching "+saveTo+" from "+fetchFrom +" : "+e, e);
-						System.err.println("Fetch failed due to internal error (bug or severe local problem?): "+e);
-						e.printStackTrace();
-					} catch (Error e) {
+					} catch (RuntimeException | Error e) {
 						Logger.error(this, "Caught fetching "+saveTo+" from "+fetchFrom +" : "+e, e);
 						System.err.println("Fetch failed due to internal error (bug or severe local problem?): "+e);
 						e.printStackTrace();
@@ -2042,7 +2030,7 @@ public class UpdateOverMandatoryManager implements RequestClient {
 					if(logMINOR) Logger.minor(this, "Peer not connected: "+pn);
 					continue;
 				}
-				if(notTried == null) notTried = new ArrayList<PeerNode>();
+				if(notTried == null) notTried = new ArrayList<>();
 				notTried.add(pn);
 			}
 			if(notTried == null) {

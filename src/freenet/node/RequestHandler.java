@@ -866,9 +866,7 @@ public class RequestHandler implements PrioRunnable, ByteCounter, RequestSenderL
 				Logger.normal(this, "Asked for opennet ref but didn't want it for " + this + " :\n" + ref);
 			else
 				Logger.normal(this, "Added opennet noderef in " + this);
-		} catch(FSParseException e) {
-			Logger.error(this, "Could not parse opennet noderef for " + this + " from " + source, e);
-		} catch(PeerParseException e) {
+		} catch(FSParseException | PeerParseException e) {
 			Logger.error(this, "Could not parse opennet noderef for " + this + " from " + source, e);
 		} catch(ReferenceSignatureVerificationException e) {
 			Logger.error(this, "Bad signature on opennet noderef for " + this + " from " + source + " : " + e, e);
