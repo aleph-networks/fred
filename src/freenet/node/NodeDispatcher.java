@@ -383,12 +383,7 @@ public class NodeDispatcher implements Dispatcher, Runnable {
 
 	private void handleDisconnect(final Message m, final PeerNode source) {
 		// Wait for 1 second to ensure that the ack gets sent first.
-		node.getTicker().queueTimedJob(new Runnable() {
-			@Override
-			public void run() {
-				finishDisconnect(m, source);
-			}
-		}, 1000);
+		node.getTicker().queueTimedJob(() -> finishDisconnect(m, source), 1000);
 	}
 	
 	private void finishDisconnect(final Message m, final PeerNode source) {
@@ -823,13 +818,7 @@ public class NodeDispatcher implements Dispatcher, Runnable {
 	public void run() {
 		long now=System.currentTimeMillis();
 		synchronized (routedContexts) {
-			Iterator<RoutedContext> i = routedContexts.values().iterator();
-			while (i.hasNext()) {
-				RoutedContext rc = i.next();
-				if (now-rc.createdTime > STALE_CONTEXT) {
-					i.remove();
-				}
-			}
+            routedContexts.values().removeIf(rc -> now - rc.createdTime > STALE_CONTEXT);
 		}
 		node.getTicker().queueTimedJob(this, STALE_CONTEXT_CHECK);
 	}

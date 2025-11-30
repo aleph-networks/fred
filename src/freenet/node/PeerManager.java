@@ -173,14 +173,12 @@ public class PeerManager {
 		myPeers = new PeerNode[0];
 		connectedPeers = new PeerNode[0];
 		this.node = node;
-		shutdownHook.addEarlyJob(new Thread() {
-			public void run() {
-				// Ensure we're not waiting 5mins here
-				writePeersDarknet();
-				writePeersOpennet();
-				writePeersNow(false);
-			}
-		});
+		shutdownHook.addEarlyJob(new Thread(() -> {
+            // Ensure we're not waiting 5mins here
+            writePeersDarknet();
+            writePeersOpennet();
+            writePeersNow(false);
+        }));
 	}
 
 	/**
@@ -356,7 +354,7 @@ public class PeerManager {
 			Logger.normal(this, "Added " + pn);
 		}
 		if(pn.recordStatus())
-			addPeerNodeStatus(pn.getPeerNodeStatus(), pn, false);
+			addPeerNodeStatus(pn.getPeerNodeStatus(), pn);
 		pn.setPeerNodeStatus(System.currentTimeMillis());
 		if((!ignoreOpennet) && pn instanceof OpennetPeerNode) {
 			OpennetManager opennet = node.getOpennet();
@@ -371,14 +369,7 @@ public class PeerManager {
 		notifyPeerStatusChangeListeners();
 		if(!pn.isSeed()) {
 			// LOCKING: addPeer() can be called inside PM lock, so must do this on a separate thread.
-			node.getExecutor().execute(new Runnable() {
-				
-				@Override
-				public void run() {
-					updatePMUserAlert();
-				}
-				
-			});
+			node.getExecutor().execute(this::updatePMUserAlert);
 		}
 		return true;
 	}
@@ -712,22 +703,18 @@ public class PeerManager {
 				return;
 			}
 			if(!pn.isSeed()) {
-				node.getTicker().queueTimedJob(new Runnable() {
-					
-					@Override
-					public void run() {
-						if(pn.isDisconnecting()) {
-							if(remove) {
-								if(removePeer(pn)) {
-									if(!pn.isSeed()) {
-										writePeersUrgent(pn.isOpennet());
-									}
-								}
-							}
-							pn.disconnected(true, true);
-						}
-					}
-				}, timeout);
+				node.getTicker().queueTimedJob(() -> {
+                    if(pn.isDisconnecting()) {
+                        if(remove) {
+                            if(removePeer(pn)) {
+                                if(!pn.isSeed()) {
+                                    writePeersUrgent(pn.isOpennet());
+                                }
+                            }
+                        }
+                        pn.disconnected(true, true);
+                    }
+                }, timeout);
 			}
 		} else {
 			if(remove) {
@@ -1798,23 +1785,16 @@ public class PeerManager {
 		this.allPeersStatuses.changePeerNodeStatus(peerNode, oldPeerNodeStatus, peerNodeStatus, noLog);
 		if(!peerNode.isOpennet())
 			this.darknetPeersStatuses.changePeerNodeStatus(peerNode, oldPeerNodeStatus, peerNodeStatus, noLog);
-		node.getExecutor().execute(new Runnable() {
-
-			@Override
-			public void run() {
-				updatePMUserAlert();
-			}
-			
-		});
+		node.getExecutor().execute(() -> updatePMUserAlert());
 	}
 
 	/**
 	 * Add a PeerNode status to the map. Used internally when a peer is added.
 	 */
-	private void addPeerNodeStatus(int pnStatus, PeerNode peerNode, boolean noLog) {
-		this.allPeersStatuses.addStatus(pnStatus, peerNode, noLog);
+	private void addPeerNodeStatus(int pnStatus, PeerNode peerNode) {
+		this.allPeersStatuses.addStatus(pnStatus, peerNode, false);
 		if(!peerNode.isOpennet())
-			this.darknetPeersStatuses.addStatus(pnStatus, peerNode, noLog);
+			this.darknetPeersStatuses.addStatus(pnStatus, peerNode, false);
 	}
 
 	/**

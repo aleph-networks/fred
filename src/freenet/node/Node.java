@@ -1283,13 +1283,7 @@ public class Node implements TimeSkewDetectorCallback {
 				if(isPRNGReady)
 					return;
 				extendTimeouts();
-				File[] subDirs = f.listFiles(new FileFilter() {
-
-					@Override
-					public boolean accept(File pathname) {
-						return pathname.exists() && pathname.canRead() && pathname.isDirectory();
-					}
-				});
+				File[] subDirs = f.listFiles(pathname -> pathname.exists() && pathname.canRead() && pathname.isDirectory());
 
 
 				// @see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=5086412
@@ -1747,20 +1741,12 @@ public class Node implements TimeSkewDetectorCallback {
 
 		Logger.normal(Node.class, "Creating node...");
 
-		shutdownHook.addEarlyJob(new Thread() {
-			@Override
-			public void run() {
-				if (opennet != null)
-					opennet.stop(false);
-			}
-		});
+		shutdownHook.addEarlyJob(new Thread(() -> {
+            if (opennet != null)
+                opennet.stop(false);
+        }));
 
-		shutdownHook.addEarlyJob(new Thread() {
-			@Override
-			public void run() {
-				darknetCrypto.stop();
-			}
-		});
+		shutdownHook.addEarlyJob(new Thread(() -> darknetCrypto.stop()));
 
 		// Bandwidth limit
 
@@ -2373,20 +2359,16 @@ public class Node implements TimeSkewDetectorCallback {
 		storePreallocate = nodeConfig.getBoolean("storePreallocate");
 
 		if(File.separatorChar == '/' && !System.getProperty("os.name").toLowerCase().contains("mac os")) {
-			securityLevels.addPhysicalThreatLevelListener(new SecurityLevelListener<SecurityLevels.PHYSICAL_THREAT_LEVEL>() {
-
-				@Override
-				public void onChange(PHYSICAL_THREAT_LEVEL oldLevel, PHYSICAL_THREAT_LEVEL newLevel) {
-					try {
-						if(newLevel == PHYSICAL_THREAT_LEVEL.LOW)
-							nodeConfig.set("storePreallocate", false);
-						else
-							nodeConfig.set("storePreallocate", true);
-					} catch (NodeNeedRestartException | InvalidConfigValueException e) {
-						// Ignore
-					}
+			securityLevels.addPhysicalThreatLevelListener((oldLevel, newLevel) -> {
+                try {
+                    if(newLevel == PHYSICAL_THREAT_LEVEL.LOW)
+                        nodeConfig.set("storePreallocate", false);
+                    else
+                        nodeConfig.set("storePreallocate", true);
+                } catch (NodeNeedRestartException | InvalidConfigValueException e) {
+                    // Ignore
                 }
-			});
+});
 		}
 
 		securityLevels.addPhysicalThreatLevelListener(new SecurityLevelListener<SecurityLevels.PHYSICAL_THREAT_LEVEL>() {
@@ -2707,17 +2689,12 @@ public class Node implements TimeSkewDetectorCallback {
 
 		// MAXIMUM seclevel = no slashdot cache.
 
-		securityLevels.addNetworkThreatLevelListener(new SecurityLevelListener<NETWORK_THREAT_LEVEL>() {
-
-			@Override
-			public void onChange(NETWORK_THREAT_LEVEL oldLevel, NETWORK_THREAT_LEVEL newLevel) {
-				if(newLevel == NETWORK_THREAT_LEVEL.MAXIMUM)
-					useSlashdotCache = false;
-				else if(oldLevel == NETWORK_THREAT_LEVEL.MAXIMUM)
-					useSlashdotCache = true;
-			}
-
-		});
+		securityLevels.addNetworkThreatLevelListener((oldLevel, newLevel) -> {
+            if(newLevel == NETWORK_THREAT_LEVEL.MAXIMUM)
+                useSlashdotCache = false;
+            else if(oldLevel == NETWORK_THREAT_LEVEL.MAXIMUM)
+                useSlashdotCache = true;
+        });
 
 		nodeConfig.register("skipWrapperWarning", false, sortOrder++, true, false, "Node.skipWrapperWarning", "Node.skipWrapperWarningLong", new BooleanCallback() {
 
@@ -3232,22 +3209,17 @@ public class Node implements TimeSkewDetectorCallback {
 				Node.this.sskDatastore = sskDatastore;
 				Node.this.sskDatacache = sskDatacache;
 
-				this.getTicker().queueTimedJob(new Runnable() {
+				this.getTicker().queueTimedJob(() -> {
+                    Node.this.chkDatastore = chkDatastore;
+                    Node.this.chkDatacache = chkDatacache;
+                    Node.this.pubKeyDatastore = pubKeyDatastore;
+                    Node.this.pubKeyDatacache = pubKeyDatacache;
+                    getPubKey.setDataStore(pubKeyDatastore, pubKeyDatacache);
+                    Node.this.sskDatastore = sskDatastore;
+                    Node.this.sskDatacache = sskDatacache;
 
-					@Override
-					public void run() {
-						Node.this.chkDatastore = chkDatastore;
-						Node.this.chkDatacache = chkDatacache;
-						Node.this.pubKeyDatastore = pubKeyDatastore;
-						Node.this.pubKeyDatacache = pubKeyDatacache;
-						getPubKey.setDataStore(pubKeyDatastore, pubKeyDatacache);
-						Node.this.sskDatastore = sskDatastore;
-						Node.this.sskDatacache = sskDatacache;
-
-						finishInitSaltHashFS(suffix, clientCore);
-					}
-
-				}, "Start store", 0, true, false);
+                    finishInitSaltHashFS(suffix, clientCore);
+                }, "Start store", 0, true, false);
 			}
 
 		} catch (IOException e) {
@@ -3427,15 +3399,11 @@ public class Node implements TimeSkewDetectorCallback {
 		long now = System.currentTimeMillis();
 		long transition = Version.transitionTime();
 		if(now < transition)
-			ticker.queueTimedJob(new Runnable() {
-
-				@Override
-				public void run() {
-					for(PeerNode pn: peers.myPeers()) {
-						pn.updateVersionRoutablity();
-					}
-				}
-			}, transition - now);
+			ticker.queueTimedJob(() -> {
+                for(PeerNode pn: peers.myPeers()) {
+                    pn.updateVersionRoutablity();
+                }
+            }, transition - now);
 	}
 
 	private void warnIfNotUsingWrapper() {
@@ -4957,13 +4925,7 @@ public class Node implements TimeSkewDetectorCallback {
 			showFriendsVisibilityAlert = true;
 		}
 		// Wait until startup completed.
-		this.getTicker().queueTimedJob(new Runnable() {
-
-			@Override
-			public void run() {
-				config.store();
-			}
-		}, 0);
+		this.getTicker().queueTimedJob(() -> config.store(), 0);
 		registerFriendsVisibilityAlert();
 	}
 	
@@ -4983,14 +4945,7 @@ public class Node implements TimeSkewDetectorCallback {
 	private void registerFriendsVisibilityAlert() {
 		if(clientCore == null || clientCore.getAlerts() == null) {
 			// Wait until startup completed.
-			this.getTicker().queueTimedJob(new Runnable() {
-
-				@Override
-				public void run() {
-					registerFriendsVisibilityAlert();
-				}
-				
-			}, 0);
+			this.getTicker().queueTimedJob(() -> registerFriendsVisibilityAlert(), 0);
 			return;
 		}
 		clientCore.getAlerts().register(visibilityAlert);

@@ -117,11 +117,7 @@ public class SeednodePingTest extends RealNodeTest {
 		Map<FATE, Integer> totals = new EnumMap<>(SeedServerTestPeerNode.FATE.class);
 		for(SeedServerTestPeerNode seednode : seedNodes) {
 			FATE fate = seednode.getFate();
-			Integer x = totals.get(fate);
-			if(x == null)
-				totals.put(fate, 1);
-			else
-				totals.put(fate, x+1);
+            totals.merge(fate, 1, Integer::sum);
 			System.out.println(seednode.getIdentityString() + " : "+fate+ " : "+seednode.getPeerNodeStatusString());
 		}
 		System.out.println("TOTALS:");
@@ -134,11 +130,7 @@ public class SeednodePingTest extends RealNodeTest {
 	Map<FATE, Integer> totals = new EnumMap<>(SeedServerTestPeerNode.FATE.class);
 	for(SeedServerTestPeerNode seednode : seedNodes) {
 		FATE fate = seednode.getFate();
-		Integer x = totals.get(fate);
-		if(x == null)
-			totals.put(fate, 1);
-		else
-			totals.put(fate, x+1);
+        totals.merge(fate, 1, Integer::sum);
 		System.out.println(seednode.getIdentityString() + " : "+fate+ " : "+seednode.getPeerNodeStatusString());
 	}
 	System.out.println("RESULT:TOTALS:");

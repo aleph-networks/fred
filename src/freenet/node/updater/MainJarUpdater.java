@@ -153,15 +153,10 @@ public class MainJarUpdater extends NodeUpdater implements Deployer {
 				fetched = true;
 				f = uomFetcher;
 			}
-			MainJarUpdater.this.node.getExecutor().execute(new Runnable() {
-
-				@Override
-				public void run() {
-					getter.cancel(clientContext);
-					if(f != null) f.cancel();
-				}
-				
-			});
+			MainJarUpdater.this.node.getExecutor().execute(() -> {
+                getter.cancel(clientContext);
+                if(f != null) f.cancel();
+            });
 		}
 		
 		@Override
@@ -241,18 +236,13 @@ public class MainJarUpdater extends NodeUpdater implements Deployer {
 				if(!essential) return;
 			}
 			UOMDependencyFetcher f = manager.getUpdateOverMandatory().fetchDependency(expectedHash, expectedLength, filename, executable,
-					new UOMDependencyFetcherCallback() {
-
-						@Override
-						public void onSuccess() {
-							synchronized(DependencyJarFetcher.this) {
-								if(fetched) return;
-								fetched = true;
-							}
-							if(cb != null) cb.onSuccess();
-						}
-						
-			});
+                    () -> {
+                        synchronized(DependencyJarFetcher.this) {
+                            if(fetched) return;
+                            fetched = true;
+                        }
+                        if(cb != null) cb.onSuccess();
+                    });
 			synchronized(this) {
 				if(uomFetcher != null) {
 					Logger.error(this, "Started UOMFetcher twice for "+filename, new Exception("error"));

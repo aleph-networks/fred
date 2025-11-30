@@ -139,11 +139,7 @@ public class Announcer {
          * TODO: If the seed nodes file is found it does not unregister the STATUS_NO_SEEDNODES
          * event.
          */
-				node.getTicker().queueTimedJob(new Runnable() {
-					public void run() {
-						maybeSendAnnouncement();
-					}
-				}, Announcer.RETRY_MISSING_SEEDNODES_DELAY);
+				node.getTicker().queueTimedJob(this::maybeSendAnnouncement, Announcer.RETRY_MISSING_SEEDNODES_DELAY);
 				return;
 			} else {
 				registerEvent(STATUS_CONNECTING_SEEDNODES);
@@ -376,19 +372,14 @@ public class Announcer {
 		}
 		
 		if(killAnnouncement) {
-			node.getExecutor().execute(new Runnable() {
-
-				@Override
-				public void run() {
-					for(OpennetPeerNode pn : node.getPeers().getOpennetPeers()) {
-						node.getPeers().disconnectAndRemove(pn, true, true, true);
-					}
-					for(SeedServerPeerNode pn : node.getPeers().getSeedServerPeersVector()) {
-						node.getPeers().disconnectAndRemove(pn, true, true, true);
-					}
-				}
-				
-			});
+			node.getExecutor().execute(() -> {
+                for(OpennetPeerNode pn : node.getPeers().getOpennetPeers()) {
+                    node.getPeers().disconnectAndRemove(pn, true, true, true);
+                }
+                for(SeedServerPeerNode pn : node.getPeers().getSeedServerPeersVector()) {
+                    node.getPeers().disconnectAndRemove(pn, true, true, true);
+                }
+            });
 			return true;
 		} else {
 			synchronized(this) {
@@ -439,19 +430,9 @@ public class Announcer {
 					node.getPeers().disconnectAndRemove(pn, true, true, false);
 				}
 				// Re-check every minute. Something bad might happen (e.g. cpu starvation), causing us to have to reseed.
-				node.getTicker().queueTimedJob(new Runnable() {
-					@Override
-					public void run() {
-						maybeSendAnnouncement();
-					}
-				}, "Check whether we need to announce", RETRY_DELAY, false, true);
+				node.getTicker().queueTimedJob(() -> maybeSendAnnouncement(), "Check whether we need to announce", RETRY_DELAY, false, true);
 			} else {
-				node.getTicker().queueTimedJob(new Runnable() {
-					@Override
-					public void run() {
-						maybeSendAnnouncement();
-					}
-				}, "Check whether we need to announce", RETRY_DELAY, false, true);
+				node.getTicker().queueTimedJob(() -> maybeSendAnnouncement(), "Check whether we need to announce", RETRY_DELAY, false, true);
 				if(running != 0)
 					maybeSendAnnouncement();
 			}
@@ -461,14 +442,7 @@ public class Announcer {
 
 	public void maybeSendAnnouncementOffThread() {
 		if(enoughPeers()) return;
-		node.getTicker().queueTimedJob(new Runnable() {
-
-			@Override
-			public void run() {
-				maybeSendAnnouncement();
-			}
-
-		}, 0);
+		node.getTicker().queueTimedJob(this::maybeSendAnnouncement, 0);
 	}
 
 	protected void maybeSendAnnouncement() {
@@ -494,8 +468,7 @@ public class Announcer {
 			}
 			// Second, do we have many announcements running?
 			if(runningAnnouncements > WANT_ANNOUNCEMENTS) {
-				if(logMINOR)
-					Logger.minor(this, "Running announcements already");
+				if(logMINOR) Logger.minor(this, "Running announcements already");
 				return;
 			}
 			// In cooling-off period?
@@ -591,90 +564,87 @@ public class Announcer {
 		System.out.println("Announcement to "+seed.userToString()+" starting...");
 		if(logMINOR)
 			Logger.minor(this, "Announcement to "+seed.userToString()+" starting...");
-		AnnounceSender sender = new AnnounceSender(node.getLocation(), om, node, new AnnouncementCallback() {
-			private int totalAdded;
-			private int totalNotWanted;
-			private boolean acceptedSomewhere;
-			@Override
-			public synchronized void acceptedSomewhere() {
-				acceptedSomewhere = true;
-			}
-			@Override
-			public void addedNode(PeerNode pn) {
-				synchronized(Announcer.this) {
-					announcementAddedNodes++;
-					totalAdded++;
-				}
-				Logger.normal(this, "Announcement to "+seed.userToString()+" added node "+pn+" for a total of "+announcementAddedNodes+" ("+totalAdded+" from this announcement)");
-				System.out.println("Announcement to "+seed.userToString()+" added node "+pn.userToString()+'.');
-				return;
-			}
-			@Override
-			public void bogusNoderef(String reason) {
-				Logger.normal(this, "Announcement to "+seed.userToString()+" got bogus noderef: "+reason, new Exception("debug"));
-			}
-			@Override
-			public void completed() {
-				boolean announceNow = false;
-				synchronized(Announcer.this) {
-					runningAnnouncements--;
-					Logger.normal(this, "Announcement to "+seed.userToString()+" completed, now running "+runningAnnouncements+" announcements");
-					if(runningAnnouncements == 0 && announcementAddedNodes > 0) {
-						// No point waiting if no nodes have been added!
-						startTime = System.currentTimeMillis() + COOLING_OFF_PERIOD;
-						sentAnnouncements = 0;
-						// Wait for COOLING_OFF_PERIOD before trying again
-						node.getTicker().queueTimedJob(new Runnable() {
-
-							@Override
-							public void run() {
-								maybeSendAnnouncement();
-							}
-
-						}, COOLING_OFF_PERIOD);
-					} else if(runningAnnouncements == 0) {
-						sentAnnouncements = 0;
-						announceNow = true;
+		AnnounceSender sender = new AnnounceSender(node.getLocation(),
+				om,
+				node,
+				new AnnouncementCallback() {
+					private int totalAdded;
+					private int totalNotWanted;
+					private boolean acceptedSomewhere;
+					@Override
+					public synchronized void acceptedSomewhere() {
+						acceptedSomewhere = true;
 					}
-				}
-				// If it takes more than COOLING_OFF_PERIOD to disconnect, we might not be able to reannounce to this
-				// node. However, we can't reannounce to it anyway until announcedTo is cleared, which probably will
-				// be more than that period in the future.
-				node.getPeers().disconnectAndRemove(seed, true, false, false);
-				int shallow=node.maxHTL()-(totalAdded+totalNotWanted);
-				if(acceptedSomewhere)
-					System.out.println("Announcement to "+seed.userToString()+" completed ("+totalAdded+" added, "+totalNotWanted+" not wanted, "+shallow+" shallow)");
-				else
-					System.out.println("Announcement to "+seed.userToString()+" not accepted (version "+seed.getVersionNumber()+") .");
-				if(announceNow)
-					maybeSendAnnouncement();
-			}
+					@Override
+					public void addedNode(PeerNode pn) {
+						synchronized(Announcer.this) {
+							announcementAddedNodes++;
+							totalAdded++;
+						}
+						Logger.normal(this, "Announcement to "+seed.userToString()+" added node "+pn+" for a total of "+announcementAddedNodes+" ("+totalAdded+" from this announcement)");
+						System.out.println("Announcement to "+seed.userToString()+" added node "+pn.userToString()+'.');
+						return;
+					}
+					@Override
+					public void bogusNoderef(String reason) {
+						Logger.normal(this, "Announcement to "+seed.userToString()+" got bogus noderef: "+reason, new Exception("debug"));
+					}
+					@Override
+					public void completed() {
+						boolean announceNow = false;
+						synchronized(Announcer.this) {
+							runningAnnouncements--;
+							Logger.normal(this, "Announcement to "+seed.userToString()+" completed, now running "+runningAnnouncements+" announcements");
+							if(runningAnnouncements == 0 && announcementAddedNodes > 0) {
+								// No point waiting if no nodes have been added!
+								startTime = System.currentTimeMillis() + COOLING_OFF_PERIOD;
+								sentAnnouncements = 0;
+								// Wait for COOLING_OFF_PERIOD before trying again
+								node.getTicker().queueTimedJob(() -> maybeSendAnnouncement(), COOLING_OFF_PERIOD);
+							} else if(runningAnnouncements == 0) {
+								sentAnnouncements = 0;
+								announceNow = true;
+							}
+						}
+						// If it takes more than COOLING_OFF_PERIOD to disconnect, we might not be able to reannounce to this
+						// node. However, we can't reannounce to it anyway until announcedTo is cleared, which probably will
+						// be more than that period in the future.
+						node.getPeers().disconnectAndRemove(seed, true, false, false);
+						int shallow=node.maxHTL()-(totalAdded+totalNotWanted);
+						if(acceptedSomewhere)
+							System.out.println("Announcement to "+seed.userToString()+" completed ("+totalAdded+" added, "+totalNotWanted+" not wanted, "+shallow+" shallow)");
+						else
+							System.out.println("Announcement to "+seed.userToString()+" not accepted (version "+seed.getVersionNumber()+") .");
+						if(announceNow)
+							maybeSendAnnouncement();
+					}
 
-			@Override
-			public void nodeFailed(PeerNode pn, String reason) {
-				Logger.normal(this, "Announcement to node "+pn.userToString()+" failed: "+reason);
-			}
-			@Override
-			public void noMoreNodes() {
-				Logger.normal(this, "Announcement to "+seed.userToString()+" ran out of nodes (route not found)");
-			}
-			@Override
-			public void nodeNotWanted() {
-				synchronized(Announcer.this) {
-					announcementNotWantedNodes++;
-					totalNotWanted++;
-				}
-				Logger.normal(this, "Announcement to "+seed.userToString()+" returned node not wanted for a total of "+announcementNotWantedNodes+" ("+totalNotWanted+" from this announcement)");
-			}
-			@Override
-			public void nodeNotAdded() {
-				Logger.normal(this, "Announcement to "+seed.userToString()+" : node not wanted (maybe already have it, opennet just turned off, etc)");
-			}
-			@Override
-			public void relayedNoderef() {
-				Logger.error(this, "Announcement to "+seed.userToString()+" : RELAYED ?!?!?!");
-			}
-		}, seed);
+					@Override
+					public void nodeFailed(PeerNode pn, String reason) {
+						Logger.normal(this, "Announcement to node "+pn.userToString()+" failed: "+reason);
+					}
+					@Override
+					public void noMoreNodes() {
+						Logger.normal(this, "Announcement to "+seed.userToString()+" ran out of nodes (route not found)");
+					}
+					@Override
+					public void nodeNotWanted() {
+						synchronized(Announcer.this) {
+							announcementNotWantedNodes++;
+							totalNotWanted++;
+						}
+						Logger.normal(this, "Announcement to "+seed.userToString()+" returned node not wanted for a total of "+announcementNotWantedNodes+" ("+totalNotWanted+" from this announcement)");
+					}
+					@Override
+					public void nodeNotAdded() {
+						Logger.normal(this, "Announcement to "+seed.userToString()+" : node not wanted (maybe already have it, opennet just turned off, etc)");
+					}
+					@Override
+					public void relayedNoderef() {
+						Logger.error(this, "Announcement to "+seed.userToString()+" : RELAYED ?!?!?!");
+					}
+				},
+				seed);
 		node.getExecutor().execute(sender, "Announcer to "+seed);
 		return true;
 	}

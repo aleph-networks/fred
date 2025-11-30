@@ -1561,12 +1561,7 @@ public class NodeUpdateManager {
 		deployPluginUpdates();
 		// If we're still here, we didn't update.
 		broadcastUOMAnnouncesNew();
-		node.getTicker().queueTimedJob(new Runnable() {
-			@Override
-			public void run() {
-				revocationChecker.start(false);
-			}
-		}, node.getRandom().nextInt((int) DAYS.toMillis(1)));
+		node.getTicker().queueTimedJob(() -> revocationChecker.start(false), node.getRandom().nextInt((int) DAYS.toMillis(1)));
 	}
 
 	private void deployPluginUpdates() {
@@ -1801,23 +1796,11 @@ public class NodeUpdateManager {
 	/** Called inside locks, so don't lock anything */
 	public void notPeerClaimsKeyBlown() {
 		peersSayBlown = false;
-		node.getExecutor().execute(new Runnable() {
-
-			@Override
-			public void run() {
-				if(isReadyToDeployUpdate(false))
-					deployUpdate();
-			}
-
-		}, "Check for updates");
-		node.getTicker().queueTimedJob(new Runnable() {
-
-			@Override
-			public void run() {
-				maybeBroadcastUOMAnnouncesNew();
-			}
-
-		}, REVOCATION_FETCH_TIMEOUT);
+		node.getExecutor().execute(() -> {
+            if(isReadyToDeployUpdate(false))
+                deployUpdate();
+        }, "Check for updates");
+		node.getTicker().queueTimedJob(this::maybeBroadcastUOMAnnouncesNew, REVOCATION_FETCH_TIMEOUT);
 	}
 
 	boolean peersSayBlown() {

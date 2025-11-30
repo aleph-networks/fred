@@ -369,12 +369,7 @@ public class IPDetectorPluginManager implements ForwardPortCallback {
 		} catch (Throwable t) {
 			Logger.error(this, "Caught "+t, t);
 		}
-		node.getTicker().queueTimedJob(new Runnable() {
-			@Override
-			public void run() {
-				tryMaybeRun();
-			}
-		}, MINUTES.toMillis(1));
+		node.getTicker().queueTimedJob(this::tryMaybeRun, MINUTES.toMillis(1));
 	}
 
 	/**
@@ -952,12 +947,7 @@ public class IPDetectorPluginManager implements ForwardPortCallback {
 			// Not much more we can do / want to do for now
 			// FIXME use status.externalPort.
 		}
-		node.getExecutor().execute(new Runnable() {
-			@Override
-			public void run() {
-				maybeRun();
-			}
-		}, "Redetect IP after port forward changed");
+		node.getExecutor().execute(this::maybeRun, "Redetect IP after port forward changed");
 	}
 
 	public synchronized boolean hasDetectors() {

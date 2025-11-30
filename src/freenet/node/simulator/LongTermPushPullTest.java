@@ -143,14 +143,7 @@ public class LongTermPushPullTest extends LongTermTest {
 				HighLevelSimpleClient client = node.getClientCore().makeClient((short) 0, false, false);
 				FreenetURI uri = new FreenetURI("KSK@" + uid + "-" + dateFormat.format(today.getTime()) + "-" + i);
 				System.out.println("PUSHING " + uri);
-				client.addEventHook(new ClientEventListener() {
-
-					@Override
-					public void receive(ClientEvent ce, ClientContext context) {
-						System.out.println(ce.getDescription());
-					}
-					
-				});
+				client.addEventHook((ce, context) -> System.out.println(ce.getDescription()));
 
 				try {
 					InsertBlock block = new InsertBlock(data, new ClientMetadata(), uri);
@@ -324,11 +317,7 @@ public class LongTermPushPullTest extends LongTermTest {
 					}
 					if(element.pullTimes[i] == 0) {
 						String failureMode = element.pullFailures[i];
-						Integer count = failureModes.get(failureMode);
-						if(count == null)
-							failureModes.put(failureMode, 1);
-						else
-							failureModes.put(failureMode, count+1);
+                        failureModes.merge(failureMode, 1, Integer::sum);
 						failures++;
 					} else {
 						successes++;

@@ -134,14 +134,9 @@ public abstract class SendableGet extends BaseSendableGet {
     public boolean reduceWakeupTime(final long wakeupTime, ClientContext context) {
         boolean ret = super.reduceWakeupTime(wakeupTime, context);
         if(this.parent instanceof WantsCooldownCallback) {
-            context.getJobRunner(persistent).queueNormalOrDrop(new PersistentJob() {
-
-                @Override
-                public boolean run(ClientContext context) {
-                    ((WantsCooldownCallback)parent).enterCooldown(getClientGetState(), wakeupTime, context);
-                    return false;
-                }
-                
+            context.getJobRunner(persistent).queueNormalOrDrop(context1 -> {
+                ((WantsCooldownCallback)parent).enterCooldown(getClientGetState(), wakeupTime, context1);
+                return false;
             });
         }
         return ret;
@@ -151,14 +146,9 @@ public abstract class SendableGet extends BaseSendableGet {
     public void clearWakeupTime(ClientContext context) {
         super.clearWakeupTime(context);
         if(this.parent instanceof WantsCooldownCallback) {
-            context.getJobRunner(persistent).queueNormalOrDrop(new PersistentJob() {
-
-                @Override
-                public boolean run(ClientContext context) {
-                    ((WantsCooldownCallback)parent).clearCooldown(getClientGetState());
-                    return false;
-                }
-                
+            context.getJobRunner(persistent).queueNormalOrDrop(context1 -> {
+                ((WantsCooldownCallback)parent).clearCooldown(getClientGetState());
+                return false;
             });
         }
     }

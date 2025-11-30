@@ -457,18 +457,13 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 		// This is a *network* level setting, because it affects the rate at which we initiate local
 		// requests, which could be seen by distant nodes.
 
-		node.getSecurityLevels().addNetworkThreatLevelListener(new SecurityLevelListener<NETWORK_THREAT_LEVEL>() {
-
-			@Override
-			public void onChange(NETWORK_THREAT_LEVEL oldLevel, NETWORK_THREAT_LEVEL newLevel) {
-				if(newLevel == NETWORK_THREAT_LEVEL.MAXIMUM)
-					ignoreLocalVsRemoteBandwidthLiability = true;
-				if(oldLevel == NETWORK_THREAT_LEVEL.MAXIMUM)
-					ignoreLocalVsRemoteBandwidthLiability = false;
-				// Otherwise leave it as it was. It defaults to false.
-			}
-
-		});
+		node.getSecurityLevels().addNetworkThreatLevelListener((oldLevel, newLevel) -> {
+            if(newLevel == NETWORK_THREAT_LEVEL.MAXIMUM)
+                ignoreLocalVsRemoteBandwidthLiability = true;
+            if(oldLevel == NETWORK_THREAT_LEVEL.MAXIMUM)
+                ignoreLocalVsRemoteBandwidthLiability = false;
+            // Otherwise leave it as it was. It defaults to false.
+        });
 		
 		statsConfig.registerIgnoredOption("enableNewLoadManagementRT");
 		statsConfig.registerIgnoredOption("enableNewLoadManagementBulk");
@@ -594,12 +589,7 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 	}
 
 	public void start() throws NodeInitException {
-		node.getExecutor().execute(new Runnable() {
-			@Override
-			public void run() {
-				nodePinger.start();
-			}
-		}, "Starting NodePinger");
+		node.getExecutor().execute(nodePinger::start, "Starting NodePinger");
 		persister.start();
 		noisyRejectStatsUpdater.run();
 	}
@@ -3005,13 +2995,9 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 		TrivialRunningAverage avg;
 
 		synchronized(avgDatabaseJobExecutionTimes) {
-			avg = avgDatabaseJobExecutionTimes.get(jobType);
+            avg = avgDatabaseJobExecutionTimes.computeIfAbsent(jobType, k -> new TrivialRunningAverage());
 
-			if(avg == null) {
-				avg = new TrivialRunningAverage();
-				avgDatabaseJobExecutionTimes.put(jobType, avg);
-			}
-		}
+        }
 
 		avg.report(executionTimeMiliSeconds);
 	}
@@ -3020,22 +3006,14 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 		TrivialRunningAverage avg;
 		if(realtime) {
 			synchronized (avgMandatoryBackoffTimesRT) {
-				avg = avgMandatoryBackoffTimesRT.get(backoffType);
+                avg = avgMandatoryBackoffTimesRT.computeIfAbsent(backoffType, k -> new TrivialRunningAverage());
 
-				if (avg == null) {
-					avg = new TrivialRunningAverage();
-					avgMandatoryBackoffTimesRT.put(backoffType, avg);
-				}
-			}
+            }
 		} else {
 			synchronized (avgMandatoryBackoffTimesBulk) {
-				avg = avgMandatoryBackoffTimesBulk.get(backoffType);
+                avg = avgMandatoryBackoffTimesBulk.computeIfAbsent(backoffType, k -> new TrivialRunningAverage());
 
-				if (avg == null) {
-					avg = new TrivialRunningAverage();
-					avgMandatoryBackoffTimesBulk.put(backoffType, avg);
-				}
-			}
+            }
 		}
 		avg.report(backoffTimeMilliSeconds);
 	}
@@ -3045,22 +3023,14 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 
 		if(realtime) {
 			synchronized (avgRoutingBackoffTimesRT) {
-				avg = avgRoutingBackoffTimesRT.get(backoffType);
+                avg = avgRoutingBackoffTimesRT.computeIfAbsent(backoffType, k -> new TrivialRunningAverage());
 
-				if (avg == null) {
-					avg = new TrivialRunningAverage();
-					avgRoutingBackoffTimesRT.put(backoffType, avg);
-				}
-			}
+            }
 		} else {
 			synchronized (avgRoutingBackoffTimesBulk) {
-				avg = avgRoutingBackoffTimesBulk.get(backoffType);
+                avg = avgRoutingBackoffTimesBulk.computeIfAbsent(backoffType, k -> new TrivialRunningAverage());
 
-				if (avg == null) {
-					avg = new TrivialRunningAverage();
-					avgRoutingBackoffTimesBulk.put(backoffType, avg);
-				}
-			}
+            }
 		}
 
 		avg.report(backoffTimeMilliSeconds);
@@ -3071,22 +3041,14 @@ public class NodeStats implements Persistable, BlockTimeCallback {
 
 		if (realtime) {
 			synchronized (avgTransferBackoffTimesRT) {
-				avg = avgTransferBackoffTimesRT.get(backoffType);
+                avg = avgTransferBackoffTimesRT.computeIfAbsent(backoffType, k -> new TrivialRunningAverage());
 
-				if (avg == null) {
-					avg = new TrivialRunningAverage();
-					avgTransferBackoffTimesRT.put(backoffType, avg);
-				}
-			}
+            }
 		} else {
 			synchronized (avgTransferBackoffTimesBulk) {
-				avg = avgTransferBackoffTimesBulk.get(backoffType);
+                avg = avgTransferBackoffTimesBulk.computeIfAbsent(backoffType, k -> new TrivialRunningAverage());
 
-				if (avg == null) {
-					avg = new TrivialRunningAverage();
-					avgTransferBackoffTimesBulk.put(backoffType, avg);
-				}
-			}
+            }
 		}
 		avg.report(backoffTimeMilliSeconds);
 	}

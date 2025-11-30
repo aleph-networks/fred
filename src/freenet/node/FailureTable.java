@@ -338,12 +338,7 @@ public class FailureTable {
 				return; // we haven't asked for it
 			}
 		}
-		offerExecutor.execute(new Runnable() {
-			@Override
-			public void run() {
-				innerOnOffer(key, peer, authenticator);
-			}
-		}, "onOffer()");
+		offerExecutor.execute(() -> innerOnOffer(key, peer, authenticator), "onOffer()");
 	}
 
 	/**
@@ -552,14 +547,7 @@ public class FailureTable {
         		new PartiallyReceivedBlock(Node.PACKETS_IN_BLOCK, Node.PACKET_SIZE, block.getRawData());
         	final BlockTransmitter bt =
         		new BlockTransmitter(node.getUSM(), node.getTicker(), source, uid, prb, senderCounter, BlockTransmitter.NEVER_CASCADE,
-        				new BlockTransmitterCompletion() {
-
-					@Override
-					public void blockTransferFinished(boolean success) {
-						tag.unlockHandler();
-					}
-					
-				}, realTimeFlag, node.getNodeStats());
+                        success -> tag.unlockHandler(), realTimeFlag, node.getNodeStats());
         	node.getExecutor().execute(new PrioRunnable() {
 
 				@Override

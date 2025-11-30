@@ -405,12 +405,8 @@ public class RequestTracker {
 					// The overall running* map can include local. But the local map can't include non-local.
 					if((!local) && tag.wasLocal) continue;
 					PeerNode source = tag.getSource(); // Can be null in various cases
-					CountedRequests counter = counterMap.get(source);
-					if(counter == null) {
-						counter = new CountedRequests();
-						counterMap.put(source, counter);
-					}
-					int out = tag.expectedTransfersOut(ignoreLocalVsRemote, transfersPerInsert, true);
+                    CountedRequests counter = counterMap.computeIfAbsent(source, k -> new CountedRequests());
+                    int out = tag.expectedTransfersOut(ignoreLocalVsRemote, transfersPerInsert, true);
 					int in = tag.expectedTransfersIn(ignoreLocalVsRemote, transfersPerInsert, true);
 					counter.total++;
 					counter.expectedTransfersIn += in;

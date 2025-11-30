@@ -195,19 +195,14 @@ public class RealNodeULPRTest extends RealNodeTest {
         
         final boolean[] visited = new boolean[nodes.length];
         
-        NodeDispatcherCallback cb = new NodeDispatcherCallback() {
-
-			@Override
-			public void snoop(Message m, Node n) {
-				if(((!isSSK) && m.getSpec() == DMT.FNPCHKDataRequest) ||
-						(isSSK && m.getSpec() == DMT.FNPSSKDataRequest)) {
-					Key key = (Key) m.getObject(DMT.FREENET_ROUTING_KEY);
-					if(key.equals(nodeKey)) {
-						visited[n.getDarknetPortNumber() - DARKNET_PORT_BASE] = true;
-					}
-				}
-			}
-        	
+        NodeDispatcherCallback cb = (m, n) -> {
+            if(((!isSSK) && m.getSpec() == DMT.FNPCHKDataRequest) ||
+                    (isSSK && m.getSpec() == DMT.FNPSSKDataRequest)) {
+                Key key = (Key) m.getObject(DMT.FREENET_ROUTING_KEY);
+                if(key.equals(nodeKey)) {
+                    visited[n.getDarknetPortNumber() - DARKNET_PORT_BASE] = true;
+                }
+            }
         };
         
         for(Node node: nodes) {

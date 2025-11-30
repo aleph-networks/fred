@@ -77,13 +77,10 @@ public class UserAlertManager implements Comparator<UserAlert> {
 	private void notifySubscribers(final UserAlert alert) {
 		// Run off-thread, because of locking, and because client
 		// callbacks may take some time
-		core.getClientContext().mainExecutor.execute(new Runnable() {
-			@Override
-			public void run() {
-				for (FCPConnectionHandler subscriber : subscribers)
-					subscriber.send(alert.getFCPMessage());
-			}
-		}, "UserAlertManager callback executor");
+		core.getClientContext().mainExecutor.execute(() -> {
+            for (FCPConnectionHandler subscriber : subscribers)
+                subscriber.send(alert.getFCPMessage());
+        }, "UserAlertManager callback executor");
 	}
 
 	public void unregister(UserAlert alert) {
@@ -387,14 +384,11 @@ public class UserAlertManager implements Comparator<UserAlert> {
 		subscribers.add(subscriber);
 		// Run off-thread, because of locking, and because client
 		// callbacks may take some time
-		core.getClientContext().mainExecutor.execute(new Runnable() {
-			@Override
-			public void run() {
-				for (UserAlert alert : getAlerts())
-					if(alert.isValid())
-						subscriber.send(alert.getFCPMessage());
-			}
-		}, "UserAlertManager callback executor");
+		core.getClientContext().mainExecutor.execute(() -> {
+            for (UserAlert alert : getAlerts())
+                if(alert.isValid())
+                    subscriber.send(alert.getFCPMessage());
+        }, "UserAlertManager callback executor");
 		subscribers.add(subscriber);
 	}
 

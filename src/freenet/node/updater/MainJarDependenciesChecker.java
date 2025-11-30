@@ -361,21 +361,16 @@ public class MainJarDependenciesChecker {
 		// It's not acceptable to just delete stuff we don't know about.
 		clear(build);
 		HashSet<String> processed = new HashSet<>();
-		File[] list = new File(".").listFiles(new FileFilter() {
-
-			@Override
-			public boolean accept(File arg0) {
-				if(!arg0.isFile()) return false;
-				// Ignore non-jars regardless of what the regex says.
-				String name = arg0.getName().toLowerCase();
-				if(!(name.endsWith(".jar") || name.endsWith(".jar.new"))) return false;
-				// FIXME similar checks elsewhere, factor out?
-				if(name.equals("freenet.jar") || name.equals("freenet.jar.new") || name.equals("freenet-stable-latest.jar") || name.equals("freenet-stable-latest.jar.new"))
-					return false;
-				return true;
-			}
-			
-		});
+		File[] list = new File(".").listFiles(arg0 -> {
+            if(!arg0.isFile()) return false;
+            // Ignore non-jars regardless of what the regex says.
+            String name = arg0.getName().toLowerCase();
+            if(!(name.endsWith(".jar") || name.endsWith(".jar.new"))) return false;
+            // FIXME similar checks elsewhere, factor out?
+            if(name.equals("freenet.jar") || name.equals("freenet.jar.new") || name.equals("freenet-stable-latest.jar") || name.equals("freenet-stable-latest.jar.new"))
+                return false;
+            return true;
+        });
 outer:	for(String propName : props.stringPropertyNames()) {
 			if(!propName.contains(".")) continue;
 			String baseName = propName.split("\\.")[0];
@@ -644,26 +639,21 @@ outer:	for(String propName : props.stringPropertyNames()) {
 		// This method should not change anything, but can call the callbacks.
 		HashSet<String> processed = new HashSet<>();
 		final ArrayList<File> toDelete = new ArrayList<>();
-		File[] listMain = new File(".").listFiles(new FileFilter() {
-
-			@Override
-			public boolean accept(File arg0) {
-				if(!arg0.isFile()) return false;
-				String name = arg0.getName().toLowerCase();
-				// Cleanup old updater tempfiles.
-				if(name.endsWith(NodeUpdateManager.TEMP_FILE_SUFFIX) || name.endsWith(NodeUpdateManager.TEMP_BLOB_SUFFIX)) {
-					toDelete.add(arg0);
-					return false;
-				}
-				// Ignore non-jars regardless of what the regex says.
-				if(!name.endsWith(".jar")) return false;
-				// FIXME similar checks elsewhere, factor out?
-				if(name.equals("freenet.jar") || name.equals("freenet.jar.new") || name.equals("freenet-stable-latest.jar") || name.equals("freenet-stable-latest.jar.new"))
-					return false;
-				return true;
-			}
-			
-		});
+		File[] listMain = new File(".").listFiles(arg0 -> {
+            if(!arg0.isFile()) return false;
+            String name = arg0.getName().toLowerCase();
+            // Cleanup old updater tempfiles.
+            if(name.endsWith(NodeUpdateManager.TEMP_FILE_SUFFIX) || name.endsWith(NodeUpdateManager.TEMP_BLOB_SUFFIX)) {
+                toDelete.add(arg0);
+                return false;
+            }
+            // Ignore non-jars regardless of what the regex says.
+            if(!name.endsWith(".jar")) return false;
+            // FIXME similar checks elsewhere, factor out?
+            if(name.equals("freenet.jar") || name.equals("freenet.jar.new") || name.equals("freenet-stable-latest.jar") || name.equals("freenet-stable-latest.jar.new"))
+                return false;
+            return true;
+        });
 		for(File f : toDelete) {
 			System.out.println("Deleting old temp file \""+f+"\"");
 			f.delete();
@@ -1681,15 +1671,10 @@ outer:	for(String propName : props.stringPropertyNames()) {
 		broken = false;
 		this.build = build;
 		final Downloader[] toCancel = downloaders.toArray(new Downloader[downloaders.size()]);
-		executor.execute(new Runnable() {
-
-			@Override
-			public void run() {
-				for(Downloader d : toCancel)
-					d.cancel();
-			}
-			
-		});
+		executor.execute(() -> {
+            for(Downloader d : toCancel)
+                d.cancel();
+        });
 		downloaders.clear();
 	}
 

@@ -1904,22 +1904,17 @@ public class DarknetPeerNode extends PeerNode {
 				}
 				return;
 			}
-			node.getExecutor().execute(new Runnable() {
-
-				@Override
-				public void run() {
-					try {
-						bt.send();
-					} catch (DisconnectedException e) {
-						// :|
-					} finally {
-						synchronized(DarknetPeerNode.this) {
-							sendingFullNoderef = false;
-						}
-					}
-				}
-
-			});
+			node.getExecutor().execute(() -> {
+                try {
+                    bt.send();
+                } catch (DisconnectedException e) {
+                    // :|
+                } finally {
+                    synchronized(DarknetPeerNode.this) {
+                        sendingFullNoderef = false;
+                    }
+                }
+            });
 		} catch (RuntimeException | Error e) {
 			synchronized(this) {
 				sendingFullNoderef = false;

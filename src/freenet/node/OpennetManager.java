@@ -866,11 +866,7 @@ public class OpennetManager {
 				}
 				NOT_DROP_REASON reason = pn.isDroppableWithReason(false);
 				if(map != null) {
-					Integer x = map.get(reason);
-					if(x == null)
-						map.put(reason, 1);
-					else
-						map.put(reason, x+1);
+                    map.merge(reason, 1, Integer::sum);
 				}
 				// Over the limit does not force us to drop TOO OLD peers since they don't count towards the limit.
 				if((reason != NOT_DROP_REASON.DROPPABLE) && ((!force) || tooOld)) {
@@ -904,11 +900,7 @@ public class OpennetManager {
 				}
 				NOT_DROP_REASON reason = pn.isDroppableWithReason(false);
 				if(map != null) {
-					Integer x = map.get(reason);
-					if(x == null)
-						map.put(reason, 1);
-					else
-						map.put(reason, x+1);
+                    map.merge(reason, 1, Integer::sum);
 				}
 				// Over the limit does not force us to drop TOO OLD peers since they don't count towards the limit.
 				if((reason != NOT_DROP_REASON.DROPPABLE) && ((!force) || tooOld)) {

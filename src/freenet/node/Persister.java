@@ -104,14 +104,10 @@ class Persister implements Runnable {
 			}
 			started = true;
 		}
-		SemiOrderedShutdownHook.get().addEarlyJob(new Thread() {
-			
-			public void run() {
-				System.out.println("Writing "+persistTarget+" on shutdown");
-				persistThrottle();
-			}
-			
-		});
+		SemiOrderedShutdownHook.get().addEarlyJob(new Thread(() -> {
+            System.out.println("Writing "+persistTarget+" on shutdown");
+            persistThrottle();
+        }));
 		run();
 	}
 

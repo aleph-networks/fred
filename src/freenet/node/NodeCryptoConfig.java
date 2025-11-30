@@ -156,20 +156,15 @@ public class NodeCryptoConfig {
 		oneConnectionPerAddress = config.getBoolean("oneConnectionPerIP");
 		
 		if(isOpennet) {
-			securityLevels.addNetworkThreatLevelListener(new SecurityLevelListener<NETWORK_THREAT_LEVEL>() {
-
-				@Override
-				public void onChange(NETWORK_THREAT_LEVEL oldLevel, NETWORK_THREAT_LEVEL newLevel) {
-					// Might be useful for nodes on the same NAT etc, so turn it off for LOW. Otherwise is sensible.
-					// It's always off on darknet, since we can reasonably expect to know our peers, even if we are paranoid
-					// about them!
-					if(newLevel == NETWORK_THREAT_LEVEL.LOW)
-						oneConnectionPerAddress = false;
-					if(oldLevel == NETWORK_THREAT_LEVEL.LOW)
-						oneConnectionPerAddress = true;
-				}
-				
-			});
+			securityLevels.addNetworkThreatLevelListener((oldLevel, newLevel) -> {
+                // Might be useful for nodes on the same NAT etc, so turn it off for LOW. Otherwise is sensible.
+                // It's always off on darknet, since we can reasonably expect to know our peers, even if we are paranoid
+                // about them!
+                if(newLevel == NETWORK_THREAT_LEVEL.LOW)
+                    oneConnectionPerAddress = false;
+                if(oldLevel == NETWORK_THREAT_LEVEL.LOW)
+                    oneConnectionPerAddress = true;
+            });
 		}
 		
 		config.register("alwaysAllowLocalAddresses", !isOpennet, sortOrder++, true, false, "Node.alwaysAllowLocalAddresses", "Node.alwaysAllowLocalAddressesLong",

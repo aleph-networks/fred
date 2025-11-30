@@ -294,21 +294,16 @@ public class UpdateOverMandatoryManager implements RequestClient {
 			}
 		}, updateManager.getByteCounter());
 		
-		updateManager.getNode().getTicker().queueTimedJob(new Runnable() {
-
-			@Override
-			public void run() {
-				if(updateManager.isBlown()) return;
-				synchronized(UpdateOverMandatoryManager.this) {
-					if(nodesSayKeyRevokedFailedTransfer.contains(source)) return;
-					if(nodesSayKeyRevokedTransferring.contains(source)) return;
-					nodesSayKeyRevoked.remove(source);
-				}
-				System.err.println("Peer "+source+" (build #" + source.getSimpleVersion() + ") said that the auto-update key had been blown, but did not transfer the revocation certificate. The most likely explanation is that the key has not been blown (the node is buggy or malicious), so we are ignoring this.");
-				maybeNotRevoked();
-			}
-
-		}, SECONDS.toMillis(60));
+		updateManager.getNode().getTicker().queueTimedJob(() -> {
+            if(updateManager.isBlown()) return;
+            synchronized(UpdateOverMandatoryManager.this) {
+                if(nodesSayKeyRevokedFailedTransfer.contains(source)) return;
+                if(nodesSayKeyRevokedTransferring.contains(source)) return;
+                nodesSayKeyRevoked.remove(source);
+            }
+            System.err.println("Peer "+source+" (build #" + source.getSimpleVersion() + ") said that the auto-update key had been blown, but did not transfer the revocation certificate. The most likely explanation is that the key has not been blown (the node is buggy or malicious), so we are ignoring this.");
+            maybeNotRevoked();
+        }, SECONDS.toMillis(60));
 
 	// The reply message will start the transfer. It includes the revocation URI
 	// so we can tell if anything wierd is happening.
@@ -479,18 +474,14 @@ public class UpdateOverMandatoryManager implements RequestClient {
 				@Override
 				public void sent() {
 					// Timeout...
-					updateManager.getNode().getTicker().queueTimedJob(new Runnable() {
-
-						@Override
-						public void run() {
-							synchronized(UpdateOverMandatoryManager.this) {
-								// free up a slot
-								if(!askedSendJar.remove(source))
-									return;
-							}
-							maybeRequestMainJar();
-						}
-					}, REQUEST_MAIN_JAR_TIMEOUT);
+					updateManager.getNode().getTicker().queueTimedJob(() -> {
+                        synchronized(UpdateOverMandatoryManager.this) {
+                            // free up a slot
+                            if(!askedSendJar.remove(source))
+                                return;
+                        }
+                        maybeRequestMainJar();
+                    }, REQUEST_MAIN_JAR_TIMEOUT);
 				}
 			}, updateManager.getByteCounter());
 		} catch(NotConnectedException e) {
@@ -1799,14 +1790,7 @@ public class UpdateOverMandatoryManager implements RequestClient {
 		synchronized(this) {
 			dependencyFetchers.put(f.expectedHashBuffer, f);
 		}
-		this.updateManager.getNode().getExecutor().execute(new Runnable() {
-
-			@Override
-			public void run() {
-				f.start();
-			}
-			
-		});
+		this.updateManager.getNode().getExecutor().execute(() -> f.start());
 		f.start();
 		return f;
 	}
@@ -1814,7 +1798,7 @@ public class UpdateOverMandatoryManager implements RequestClient {
 	protected void startSomeDependencyFetchers() {
 		UOMDependencyFetcher[] fetchers;
 		synchronized(this) {
-			fetchers = dependencyFetchers.values().toArray(new UOMDependencyFetcher[dependencyFetchers.size()]);
+			fetchers = dependencyFetchers.values().toArray(new UOMDependencyFetcher[0]);
 		}
 		for(UOMDependencyFetcher f : fetchers) {
 			f.start();
@@ -1827,7 +1811,7 @@ public class UpdateOverMandatoryManager implements RequestClient {
 	protected void peerMaybeFreeAllSlots(PeerNode fetchFrom) {
 		UOMDependencyFetcher[] fetchers;
 		synchronized(this) {
-			fetchers = dependencyFetchers.values().toArray(new UOMDependencyFetcher[dependencyFetchers.size()]);
+			fetchers = dependencyFetchers.values().toArray(new UOMDependencyFetcher[0]);
 		}
 		for(UOMDependencyFetcher f : fetchers) {
 			f.peerMaybeFreeSlots(fetchFrom);
@@ -1992,14 +1976,7 @@ public class UpdateOverMandatoryManager implements RequestClient {
 							if(fetchFrom.isConnected() && fetchFrom.isDarknet()) {
 							    // Darknet peers only: Try again in an hour.
 							    // On opennet we'll just keep announcing until we succeed.
-							    updateManager.getNode().getTicker().queueTimedJob(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        peerMaybeFreeSlots(fetchFrom);
-                                    }
-							        
-							    }, TimeUnit.HOURS.toMillis(1));
+							    updateManager.getNode().getTicker().queueTimedJob(() -> peerMaybeFreeSlots(fetchFrom), TimeUnit.HOURS.toMillis(1));
 							}
 						}
 					}

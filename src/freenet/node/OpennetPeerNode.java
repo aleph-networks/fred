@@ -233,14 +233,7 @@ public class OpennetPeerNode extends PeerNode {
 	 * However we will reset it after the grace period expires, in isDroppableWithReason(). */
 	protected void maybeClearPeerAddedTimeOnConnect() {
 		// Guarantee that it gets cleared.
-		node.getTicker().queueTimedJob(new FastRunnable() {
-
-			@Override
-			public void run() {
-				isDroppableWithReason(false);
-			}
-			
-		}, OpennetManager.DROP_MIN_AGE+1);
+		node.getTicker().queueTimedJob((FastRunnable) () -> isDroppableWithReason(false), OpennetManager.DROP_MIN_AGE+1);
 	}
 
 	@Override

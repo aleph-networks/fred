@@ -739,51 +739,45 @@ public class NodeClientCore implements Persistable {
 		}
 
 		node.getSecurityLevels().addPhysicalThreatLevelListener(
-				new SecurityLevelListener<PHYSICAL_THREAT_LEVEL>() {
-
-					@Override
-					public void onChange(PHYSICAL_THREAT_LEVEL oldLevel,
-							     PHYSICAL_THREAT_LEVEL newLevel) {
-						if (newLevel == PHYSICAL_THREAT_LEVEL.LOW) {
-							if (tempBucketFactory.isEncrypting()) {
-								tempBucketFactory
-										.setEncryption(false);
-							}
-							if (persistentTempBucketFactory != null) {
-								if (persistentTempBucketFactory
-										.isEncrypting()) {
-									persistentTempBucketFactory
-											.setEncryption(false);
-								}
-							}
-							persistentRAFFactory.setEncryption(false);
-						} else { // newLevel >= PHYSICAL_THREAT_LEVEL.NORMAL
-							if (!tempBucketFactory.isEncrypting()) {
-								tempBucketFactory
-										.setEncryption(true);
-							}
-							if (persistentTempBucketFactory != null) {
-								if (!persistentTempBucketFactory
-										.isEncrypting()) {
-									persistentTempBucketFactory
-											.setEncryption(true);
-								}
-							}
-							persistentRAFFactory.setEncryption(true);
-						}
-						if (clientLayerPersister.hasLoaded()) {
-							// May need to change filenames for client.dat* or even create them.
-							try {
-								initStorage(NodeClientCore.this.node
-											    .getDatabaseKey());
-							} catch (MasterKeysWrongPasswordException e) {
-								NodeClientCore.this.node
-										.setDatabaseAwaitingPassword();
-							}
-						}
-					}
-
-				});
+                (oldLevel, newLevel) -> {
+                    if (newLevel == PHYSICAL_THREAT_LEVEL.LOW) {
+                        if (tempBucketFactory.isEncrypting()) {
+                            tempBucketFactory
+                                    .setEncryption(false);
+                        }
+                        if (persistentTempBucketFactory != null) {
+                            if (persistentTempBucketFactory
+                                    .isEncrypting()) {
+                                persistentTempBucketFactory
+                                        .setEncryption(false);
+                            }
+                        }
+                        persistentRAFFactory.setEncryption(false);
+                    } else { // newLevel >= PHYSICAL_THREAT_LEVEL.NORMAL
+                        if (!tempBucketFactory.isEncrypting()) {
+                            tempBucketFactory
+                                    .setEncryption(true);
+                        }
+                        if (persistentTempBucketFactory != null) {
+                            if (!persistentTempBucketFactory
+                                    .isEncrypting()) {
+                                persistentTempBucketFactory
+                                        .setEncryption(true);
+                            }
+                        }
+                        persistentRAFFactory.setEncryption(true);
+                    }
+                    if (clientLayerPersister.hasLoaded()) {
+                        // May need to change filenames for client.dat* or even create them.
+                        try {
+                            initStorage(NodeClientCore.this.node
+                                            .getDatabaseKey());
+                        } catch (MasterKeysWrongPasswordException e) {
+                            NodeClientCore.this.node
+                                    .setDatabaseAwaitingPassword();
+                        }
+                    }
+                });
 
 		// Downloads directory
 

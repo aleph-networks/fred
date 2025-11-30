@@ -407,7 +407,7 @@ class NPFPacket {
 	public int addMessageFragment(MessageFragment frag) {
 		length += frag.length();
 		fragments.add(frag);
-		Collections.sort(fragments, new MessageFragmentComparator());
+		fragments.sort(new MessageFragmentComparator());
 
 		int msgIDLength = 0;
 		int prevMessageID = -1;

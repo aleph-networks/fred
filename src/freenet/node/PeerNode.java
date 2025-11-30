@@ -2196,14 +2196,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			arkFetcher = null;
 		}
 		final USKRetriever unsub = ret;
-		node.getExecutor().execute(new Runnable() {
-
-			@Override
-			public void run() {
-				node.getClientCore().getUskManager().unsubscribeContent(myARK, unsub, true);
-			}
-			
-		});
+		node.getExecutor().execute(() -> node.getClientCore().getUskManager().unsubscribeContent(myARK, unsub, true));
 	}
 
 
@@ -2601,14 +2594,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		if(parseARK(fs, false, forDiffNodeRef))
 			changedAnything = true;
 		if(shouldUpdatePeerCounts) {
-			node.getExecutor().execute(new Runnable() {
-
-				@Override
-				public void run() {
-					node.getPeers().updatePMUserAlert();
-				}
-				
-			});
+			node.getExecutor().execute(() -> node.getPeers().updatePMUserAlert());
 
 		}
 		return changedAnything;
@@ -4736,11 +4722,8 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 
 		public synchronized void put(SlotWaiter waiter) {
 			PeerNode source = waiter.source;
-			TreeMap<Long, SlotWaiter> map = lru.get(source);
-			if(map == null) {
-				lru.put(source, map = new TreeMap<>());
-			}
-			map.put(waiter.counter, waiter);
+            TreeMap<Long, SlotWaiter> map = lru.computeIfAbsent(source, k -> new TreeMap<>());
+            map.put(waiter.counter, waiter);
 		}
 
 		public synchronized void remove(SlotWaiter waiter) {
