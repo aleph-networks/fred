@@ -1791,7 +1791,7 @@ public class UpdateOverMandatoryManager implements RequestClient {
 		synchronized(this) {
 			dependencyFetchers.put(f.expectedHashBuffer, f);
 		}
-		this.updateManager.getNode().getExecutor().execute(() -> f.start());
+		this.updateManager.getNode().getExecutor().execute(f::start);
 		f.start();
 		return f;
 	}

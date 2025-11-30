@@ -1785,7 +1785,7 @@ public class PeerManager {
 		this.allPeersStatuses.changePeerNodeStatus(peerNode, oldPeerNodeStatus, peerNodeStatus, noLog);
 		if(!peerNode.isOpennet())
 			this.darknetPeersStatuses.changePeerNodeStatus(peerNode, oldPeerNodeStatus, peerNodeStatus, noLog);
-		node.getExecutor().execute(() -> updatePMUserAlert());
+		node.getExecutor().execute(this::updatePMUserAlert);
 	}
 
 	/**

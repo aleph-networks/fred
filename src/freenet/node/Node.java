@@ -2068,45 +2068,45 @@ public class Node implements TimeSkewDetectorCallback {
 			opennet = null;
 		}
 
-		securityLevels.addNetworkThreatLevelListener(new SecurityLevelListener<NETWORK_THREAT_LEVEL>() {
+		securityLevels.addNetworkThreatLevelListener(new SecurityLevelListener<>() {
 
-			@Override
-			public void onChange(NETWORK_THREAT_LEVEL oldLevel, NETWORK_THREAT_LEVEL newLevel) {
-				if(newLevel == NETWORK_THREAT_LEVEL.HIGH
-						|| newLevel == NETWORK_THREAT_LEVEL.MAXIMUM) {
-					OpennetManager om;
-					synchronized(Node.this) {
-						om = opennet;
-						if(om != null)
-							opennet = null;
-					}
-					if(om != null) {
-						om.stop(true);
-						ipDetector.ipDetectorManager.notifyPortChange(getPublicInterfacePorts());
-					}
-				} else if(newLevel == NETWORK_THREAT_LEVEL.NORMAL
-						|| newLevel == NETWORK_THREAT_LEVEL.LOW) {
-					OpennetManager o = null;
-					synchronized(Node.this) {
-						if(opennet == null) {
-							try {
-								o = opennet = new OpennetManager(Node.this, opennetCryptoConfig, System.currentTimeMillis(), isAllowedToConnectToSeednodes);
-							} catch (NodeInitException e) {
-								opennet = null;
-								Logger.error(this, "UNABLE TO ENABLE OPENNET: "+e, e);
-								clientCore.getAlerts().register(new SimpleUserAlert(false, l10n("enableOpennetFailedTitle"), l10n("enableOpennetFailed", "message", e.getLocalizedMessage()), l10n("enableOpennetFailed", "message", e.getLocalizedMessage()), UserAlert.ERROR));
-							}
-						}
-					}
-					if(o != null) {
-						o.start();
-						ipDetector.ipDetectorManager.notifyPortChange(getPublicInterfacePorts());
-					}
-				}
-				Node.this.config.store();
-			}
+            @Override
+            public void onChange(NETWORK_THREAT_LEVEL oldLevel, NETWORK_THREAT_LEVEL newLevel) {
+                if (newLevel == NETWORK_THREAT_LEVEL.HIGH
+                        || newLevel == NETWORK_THREAT_LEVEL.MAXIMUM) {
+                    OpennetManager om;
+                    synchronized (Node.this) {
+                        om = opennet;
+                        if (om != null)
+                            opennet = null;
+                    }
+                    if (om != null) {
+                        om.stop(true);
+                        ipDetector.ipDetectorManager.notifyPortChange(getPublicInterfacePorts());
+                    }
+                } else if (newLevel == NETWORK_THREAT_LEVEL.NORMAL
+                        || newLevel == NETWORK_THREAT_LEVEL.LOW) {
+                    OpennetManager o = null;
+                    synchronized (Node.this) {
+                        if (opennet == null) {
+                            try {
+                                o = opennet = new OpennetManager(Node.this, opennetCryptoConfig, System.currentTimeMillis(), isAllowedToConnectToSeednodes);
+                            } catch (NodeInitException e) {
+                                opennet = null;
+                                Logger.error(this, "UNABLE TO ENABLE OPENNET: " + e, e);
+                                clientCore.getAlerts().register(new SimpleUserAlert(false, l10n("enableOpennetFailedTitle"), l10n("enableOpennetFailed", "message", e.getLocalizedMessage()), l10n("enableOpennetFailed", "message", e.getLocalizedMessage()), UserAlert.ERROR));
+                            }
+                        }
+                    }
+                    if (o != null) {
+                        o.start();
+                        ipDetector.ipDetectorManager.notifyPortChange(getPublicInterfacePorts());
+                    }
+                }
+                Node.this.config.store();
+            }
 
-		});
+        });
 
 		opennetConfig.register("acceptSeedConnections", false, 2, true, true, "Node.acceptSeedConnectionsShort", "Node.acceptSeedConnections", new BooleanCallback() {
 
@@ -2371,46 +2371,46 @@ public class Node implements TimeSkewDetectorCallback {
 });
 		}
 
-		securityLevels.addPhysicalThreatLevelListener(new SecurityLevelListener<SecurityLevels.PHYSICAL_THREAT_LEVEL>() {
+		securityLevels.addPhysicalThreatLevelListener(new SecurityLevelListener<>() {
 
-			@Override
-			public void onChange(PHYSICAL_THREAT_LEVEL oldLevel, PHYSICAL_THREAT_LEVEL newLevel) {
-					if(newLevel == PHYSICAL_THREAT_LEVEL.MAXIMUM) {
-						synchronized(this) {
-							clientCacheAwaitingPassword = false;
-							databaseAwaitingPassword = false;
-						}
-						try {
-                            killMasterKeysFile();
-						    clientCore.getClientLayerPersister().disableWrite();
-						    clientCore.getClientLayerPersister().waitForNotWriting();
-                            clientCore.getClientLayerPersister().deleteAllFiles();
-						} catch (IOException e) {
-							masterKeysFile.delete();
-							Logger.error(this, "Unable to securely delete "+masterKeysFile);
-							System.err.println(NodeL10n.getBase().getString("SecurityLevels.cantDeletePasswordFile", "filename", masterKeysFile.getAbsolutePath()));
-							clientCore.getAlerts().register(new SimpleUserAlert(true, NodeL10n.getBase().getString("SecurityLevels.cantDeletePasswordFileTitle"), NodeL10n.getBase().getString("SecurityLevels.cantDeletePasswordFile"), NodeL10n.getBase().getString("SecurityLevels.cantDeletePasswordFileTitle"), UserAlert.CRITICAL_ERROR));
-						}
-					}
-					if(oldLevel == PHYSICAL_THREAT_LEVEL.MAXIMUM && newLevel != PHYSICAL_THREAT_LEVEL.HIGH) {
-					    // Not passworded.
-					    // Create the master.keys.
-					    // Keys must exist.
-					    try {
-					        MasterKeys keys;
-					        synchronized(this) {
-					            keys = Node.this.keys;
-					        }
-                            keys.changePassword(masterKeysFile, "", secureRandom);
-                        } catch (IOException e) {
-                            Logger.error(this, "Unable to create encryption keys file: "+masterKeysFile+" : "+e, e);
-                            System.err.println("Unable to create encryption keys file: "+masterKeysFile+" : "+e);
-                            e.printStackTrace();
+            @Override
+            public void onChange(PHYSICAL_THREAT_LEVEL oldLevel, PHYSICAL_THREAT_LEVEL newLevel) {
+                if (newLevel == PHYSICAL_THREAT_LEVEL.MAXIMUM) {
+                    synchronized (this) {
+                        clientCacheAwaitingPassword = false;
+                        databaseAwaitingPassword = false;
+                    }
+                    try {
+                        killMasterKeysFile();
+                        clientCore.getClientLayerPersister().disableWrite();
+                        clientCore.getClientLayerPersister().waitForNotWriting();
+                        clientCore.getClientLayerPersister().deleteAllFiles();
+                    } catch (IOException e) {
+                        masterKeysFile.delete();
+                        Logger.error(this, "Unable to securely delete " + masterKeysFile);
+                        System.err.println(NodeL10n.getBase().getString("SecurityLevels.cantDeletePasswordFile", "filename", masterKeysFile.getAbsolutePath()));
+                        clientCore.getAlerts().register(new SimpleUserAlert(true, NodeL10n.getBase().getString("SecurityLevels.cantDeletePasswordFileTitle"), NodeL10n.getBase().getString("SecurityLevels.cantDeletePasswordFile"), NodeL10n.getBase().getString("SecurityLevels.cantDeletePasswordFileTitle"), UserAlert.CRITICAL_ERROR));
+                    }
+                }
+                if (oldLevel == PHYSICAL_THREAT_LEVEL.MAXIMUM && newLevel != PHYSICAL_THREAT_LEVEL.HIGH) {
+                    // Not passworded.
+                    // Create the master.keys.
+                    // Keys must exist.
+                    try {
+                        MasterKeys keys;
+                        synchronized (this) {
+                            keys = Node.this.keys;
                         }
-					}
-				}
+                        keys.changePassword(masterKeysFile, "", secureRandom);
+                    } catch (IOException e) {
+                        Logger.error(this, "Unable to create encryption keys file: " + masterKeysFile + " : " + e, e);
+                        System.err.println("Unable to create encryption keys file: " + masterKeysFile + " : " + e);
+                        e.printStackTrace();
+                    }
+                }
+            }
 
-			});
+        });
 
 		if(securityLevels.physicalThreatLevel == PHYSICAL_THREAT_LEVEL.MAXIMUM) {
 			try {
@@ -4925,7 +4925,7 @@ public class Node implements TimeSkewDetectorCallback {
 			showFriendsVisibilityAlert = true;
 		}
 		// Wait until startup completed.
-		this.getTicker().queueTimedJob(() -> config.store(), 0);
+		this.getTicker().queueTimedJob(config::store, 0);
 		registerFriendsVisibilityAlert();
 	}
 	
@@ -4945,7 +4945,7 @@ public class Node implements TimeSkewDetectorCallback {
 	private void registerFriendsVisibilityAlert() {
 		if(clientCore == null || clientCore.getAlerts() == null) {
 			// Wait until startup completed.
-			this.getTicker().queueTimedJob(() -> registerFriendsVisibilityAlert(), 0);
+			this.getTicker().queueTimedJob(this::registerFriendsVisibilityAlert, 0);
 			return;
 		}
 		clientCore.getAlerts().register(visibilityAlert);
