@@ -1718,12 +1718,13 @@ public class UpdateOverMandatoryManager implements RequestClient {
 			cancelSend(source, uid);
 			decrementDependencies(source);
 		} else {
-            updateManager.getNode().getExecutor().execute(new Runnable() {
+			FileRandomAccessBuffer finalRaf = raf;
+			updateManager.getNode().getExecutor().execute(new Runnable() {
 				
 				@Override
 				public void run() {
 					source.incrementUOMSends();
-                    try (FileRandomAccessBuffer r = raf) {
+                    try (FileRandomAccessBuffer r = finalRaf) {
                         bt.send();
                     } catch (DisconnectedException e) {
                         Logger.normal(this, "Disconnected while sending dependency with hash " + HexUtil.bytesToHex(buf.getData()) + " to " + source);
